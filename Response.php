@@ -364,7 +364,7 @@ class Response
      * Enables ETag response cache.
      *
      * @access public
-     * @return \mako\http\Response
+     * @return \Opis\Http\Response
      */
     
     public function cache($value = true)
@@ -377,7 +377,7 @@ class Response
      * Enables output compression.
      *
      * @access public
-     * @return \mako\http\Response
+     * @return \Opis\Http\Response
      */
     
     public function compress($value = true)

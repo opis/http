@@ -89,7 +89,8 @@ class Request
 
     public function __construct($path = null, $method = null, array $get = array(), array $post = array(),
                                 array $cookies = array(), array $files = array(), array $server = array(),
-                                $body = null) {
+                                $body = null)
+    {
         
         $this->get = $get ?: $_GET;
         $this->post = $post ?: $_POST;
@@ -228,6 +229,30 @@ class Request
         // Get the real request method that was used
 
         $this->realMethod = isset($this->server['REQUEST_METHOD']) ? strtoupper($this->server['REQUEST_METHOD']) : 'GET';
+    }
+    
+    /**
+     * Remove language prefix from path
+     *
+     * @param   array   $languages  Supported languages eg. array('en', 'fr', ..)
+     * @param   string  $default    Default language
+     */
+    
+    public function removePrefix(array $languages, $default = '')
+    {
+        if($this->path !== '/')
+        {
+            foreach($languages as $language)
+            {
+                if($this->path === '/' . $language || strpos($this->path, '/' . $language . '/') === 0)
+                {
+                    $this->language = $language;
+                    $this->path = '/' . ltrim(mb_substr($this->path, (mb_strlen($language) + 1)), '/');
+                    return;
+                }
+            }
+        }
+        $this->language = $default;
     }
     
 
