@@ -218,16 +218,10 @@ class Request
             $this->ip = $ip;
         }
         
-        // Is this an Ajax request?
-
         $this->isAjax = (isset($this->server['HTTP_X_REQUESTED_WITH']) && ($this->server['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'));
-
-        // Was the request made using HTTPS?
-
+        
         $this->isSecure = (isset($this->server['HTTPS']) && filter_var($this->server['HTTPS'], FILTER_VALIDATE_BOOLEAN));
-
-        // Get the real request method that was used
-
+        
         $this->realMethod = isset($this->server['REQUEST_METHOD']) ? strtoupper($this->server['REQUEST_METHOD']) : 'GET';
     }
     
@@ -292,6 +286,7 @@ class Request
                     break;
                 case 'text/json':
                 case 'application/json':
+                case 'application/x-json':
                     $this->parsedBody = json_decode($this->body(), true);
                     break;
                 default:
