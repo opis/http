@@ -1003,50 +1003,5 @@ class Request
         
         return false;
     }
-    
-
-    /**
-     * Collects information about the request.
-     *
-     * @access protected
-     */
-
-    protected function collectRequestInfo()
-    {
-        // Get the IP address of the client that made the request
-        $checkList = array('HTTP_X_FORWARDED_FOR', 'HTTP_CLIENT_IP', 'HTTP_X_CLUSTER_CLIENT_IP', 'REMOTE_ADDR');
-        
-        foreach($checkList as $check)
-        {
-            if(isset($this->server[$check]))
-            {
-                $ip = $this->server[$check];
-                if($check == 'HTTP_X_FORWARDED_FOR')
-                {
-                    $ip = array_pop(explode(',', $ip));
-                }
-                break;
-            }
-        }
-        
-        if(isset($ip) && filter_var($ip, FILTER_VALIDATE_IP) !== false)
-        {
-            $this->ip = $ip;
-        }
-        
-        $this->isAjax = (isset($this->server['HTTP_X_REQUESTED_WITH']) && ($this->server['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'));
-        
-        $this->isSecure = (isset($this->server['HTTPS']) && filter_var($this->server['HTTPS'], FILTER_VALIDATE_BOOLEAN));
-        
-        $this->realMethod = isset($this->server['REQUEST_METHOD']) ? strtoupper($this->server['REQUEST_METHOD']) : 'GET';
-    }
-    
-    
-
-    
-
-
-
-
 
 }
