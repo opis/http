@@ -154,7 +154,8 @@ class Request
     
     public static function setTrustedHeaderName($key, $value)
     {
-        if (!array_key_exists($key, self::$trustedHeaders)) {
+        if (!array_key_exists($key, self::$trustedHeaders))
+        {
             throw new \InvalidArgumentException(sprintf('Unable to set the trusted header name for key "%s".', $key));
         }
 
@@ -173,7 +174,8 @@ class Request
     
     public static function getTrustedHeaderName($key)
     {
-        if (!array_key_exists($key, self::$trustedHeaders)) {
+        if (!array_key_exists($key, self::$trustedHeaders))
+        {
             throw new \InvalidArgumentException(sprintf('Unable to get the trusted header name for key "%s".', $key));
         }
         
@@ -984,7 +986,33 @@ class Request
     
     private function resolveClientIps()
     {
-        //implementation needed
+        $ip = $this->server('REMOTE_ADDR');
+        if(!self::$trustedProxies)
+        {
+            return array($ip);
+        }
+        
+        if (!self::$trustedHeaders[self::HEADER_CLIENT_IP] || $this->header(self::$trustedHeaders[self::HEADER_CLIENT_IP]) === null)
+        {
+            return array($ip);
+        }
+        
+        $clientIps = array_map('trim', explode(',', $this->headers->get(self::$trustedHeaders[self::HEADER_CLIENT_IP])));
+        $clientIps[] = $ip;
+        
+        $trustedProxies = !self::$trustedProxies ? array($ip) : self::$trustedProxies;
+        $ip = $clientIps[0];
+        
+        foreach ($clientIps as $key => $clientIp)
+        {
+            if (IpUtils::checkIp($clientIp, $trustedProxies))
+            {
+                unset($clientIps[$key]);
+            }
+        }
+        
+        return $clientIps ? array_reverse($clientIps) : array($ip);
+        
     }
     
     private function getUrlencodedPrefix($string, $prefix)
