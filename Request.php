@@ -82,6 +82,12 @@ class Request
         $this->request['headers'] = $this->resolveHeaders();
     }
 
+    public static function fromGlobals()
+    {
+        return new Request($_GET, $_POST, $_COOKIE, $_FILES, $_SERVER, null);
+    }
+    
+    
     /**
      * Sets a list of trusted proxies.
      *
@@ -816,7 +822,6 @@ class Request
         }
         
         $requestUri = $this->requestUri();
-        
         if($baseUrl)
         {
             if(false !== $prefix = $this->getUrlencodedPrefix($requestUri, $baseUrl))
@@ -826,7 +831,7 @@ class Request
             
             if(false !== $prefix = $this->getUrlencodedPrefix($requestUri, dirname($baseUrl)))
             {
-                return $prefix;
+                return rtrim($prefix, '/');
             }
         }
         
@@ -845,7 +850,6 @@ class Request
         {
             $baseUrl = substr($requestUri, 0, $pos + strlen($baseUrl));
         }
-        
         return rtrim($baseUrl, '/');
     }
     
@@ -866,7 +870,8 @@ class Request
             $basePath = dirname($baseUrl);
         }
         
-        if (DIRECTORY_SEPARATOR === '\\') {
+        if (DIRECTORY_SEPARATOR === '\\')
+        {
             $basePath = str_replace('\\', '/', $basePath);
         }
         
@@ -890,7 +895,7 @@ class Request
             $requestUri = substr($requestUri, 0, $pos);
         }
         
-        if (null !== $baseUrl && false === $pathInfo = substr($requestUri, strlen($baseUrl)))
+        if ($baseUrl !== null && false === $pathInfo = substr($requestUri, strlen($baseUrl)))
         {
             return '/';
         }
@@ -899,7 +904,7 @@ class Request
             return $requestUri;
         }
         
-        return (string) $pathInfo;
+        return $pathInfo;
     }
     
     protected function resolveHost()
@@ -967,7 +972,7 @@ class Request
                 return intval(substr($host, $pos + 1));
             }
             
-            return 'https' === $this->getScheme() ? 443 : 80;
+            return 'https' === $this->scheme() ? 443 : 80;
         }
         
         return $this->server('SERVER_PORT');
