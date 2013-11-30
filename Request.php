@@ -88,6 +88,114 @@ class Request
     }
     
     
+    public static function create($uri, $method = 'GET', array $input = array(), array $cookies = array(), array $files = array(), array $server = array(), $body = null)
+    {
+        $server = array_replace(array(
+            'SERVER_NAME' => 'localhost',
+            'SERVER_PORT' => 80,
+            'HTTP_HOST' => 'localhost',
+            'HTTP_USER_AGENT' => 'Opis/1.X',
+            'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'HTTP_ACCEPT_LANGUAGE' => 'en-us,en;q=0.5',
+            'HTTP_ACCEPT_CHARSET' => 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
+            'REMOTE_ADDR' => '127.0.0.1',
+            'SCRIPT_NAME' => '',
+            'SCRIPT_FILENAME' => '',
+            'SERVER_PROTOCOL' => 'HTTP/1.1',
+            'REQUEST_TIME' => time(),
+        ), $server);
+        
+        $server['PATH_INFO'] = '';
+        $server['REQUEST_METHOD'] = strtoupper($method);
+
+        $components = parse_url($uri);
+        if (isset($components['host']))
+        {
+            $server['SERVER_NAME'] = $components['host'];
+            $server['HTTP_HOST'] = $components['host'];
+        }
+        
+        if (isset($components['scheme']))
+        {
+            if ('https' === $components['scheme'])
+            {
+                $server['HTTPS'] = 'on';
+                $server['SERVER_PORT'] = 443;
+            }
+            else
+            {
+                unset($server['HTTPS']);
+                $server['SERVER_PORT'] = 80;
+            }
+        }
+        
+        
+        if (isset($components['port']))
+        {
+            $server['SERVER_PORT'] = $components['port'];
+            $server['HTTP_HOST'] = $server['HTTP_HOST'].':'.$components['port'];
+        }
+        
+        if (isset($components['user']))
+        {
+            $server['PHP_AUTH_USER'] = $components['user'];
+        }
+        
+        if (isset($components['pass']))
+        {
+            $server['PHP_AUTH_PW'] = $components['pass'];
+        }
+        
+        if (!isset($components['path']))
+        {
+            $components['path'] = '/';
+        }
+        
+        switch (strtoupper($method))
+        {
+            case 'POST':
+            case 'PUT':
+            case 'DELETE':
+                if (!isset($server['CONTENT_TYPE']))
+                {
+                    $server['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
+                }
+            case 'PATCH':
+                $post = $input;
+                $get = array();
+                break;
+            default:
+                $post = array();
+                $get = $parameters;
+                break;
+        }
+        
+        $queryString = '';
+        if (isset($components['query']))
+        {
+            parse_str(html_entity_decode($components['query']), $qs);
+            if ($get)
+            {
+                $get = array_replace($qs, $get);
+                $queryString = http_build_query($get, '', '&');
+            }
+            else
+            {
+                $get = $qs;
+                $queryString = $components['query'];
+            }
+        }
+        elseif ($get)
+        {
+            $queryString = http_build_query($get, '', '&');
+        }
+        
+        $server['REQUEST_URI'] = $components['path'].('' !== $queryString ? '?'.$queryString : '');
+        $server['QUERY_STRING'] = $queryString;
+        
+        return new Request($get, $post, $cookies, $files, $server, $body);
+    }
+    
     /**
      * Sets a list of trusted proxies.
      *
@@ -231,6 +339,15 @@ class Request
         array_multisort($order, SORT_ASC, $parts);
         
         return implode('&', $parts);
+    }
+    
+    public function response()
+    {
+        if(!isset($this->info['response']))
+        {
+            $this->info['response'] = new Response($this);
+        }
+        return $this->info['response'];
     }
     
     /**
