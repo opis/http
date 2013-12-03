@@ -166,7 +166,7 @@ class Request
                 break;
             default:
                 $post = array();
-                $get = $parameters;
+                $get = $input;
                 break;
         }
         
