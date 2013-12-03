@@ -21,39 +21,13 @@
 namespace Opis\Http;
 
 class Request
-{
-    const HEADER_CLIENT_IP = 'client_ip';
-    const HEADER_CLIENT_HOST = 'client_host';
-    const HEADER_CLIENT_PROTO = 'client_proto';
-    const HEADER_CLIENT_PORT = 'client_port';
-    
-
-    protected static $trustedProxies = array();
-
-    protected static $trustedHostPatterns = array();
-
-    protected static $trustedHosts = array();
-    
-    /**
-     * Names for headers that can be trusted when
-     * using trusted proxies.
-     *
-     * The default names are non-standard, but widely used
-     * by popular reverse proxies (like Apache mod_proxy or Amazon EC2).
-     */
-    
-    protected static $trustedHeaders = array(
-        self::HEADER_CLIENT_IP => 'X_FORWARDED_FOR',
-        self::HEADER_CLIENT_HOST => 'X_FORWARDED_HOST',
-        self::HEADER_CLIENT_PROTO => 'X_FORWARDED_PROTO',
-        self::HEADER_CLIENT_PORT => 'X_FORWARDED_PORT',
-    );
-
-    protected static $httpMethodParameterOverride = false;
+{    
 
     protected $info = array();
     
     protected $request = array();
+    
+    protected $proxy;
     
     /**
      * Constructor.
@@ -82,9 +56,11 @@ class Request
         $this->request['headers'] = $this->resolveHeaders();
     }
 
-    public static function fromGlobals()
+    public static function fromGlobals(ProxyHandler $proxy = null)
     {
-        return new Request($_GET, $_POST, $_COOKIE, $_FILES, $_SERVER, null);
+        $request = new Request($_GET, $_POST, $_COOKIE, $_FILES, $_SERVER, null);
+        $request->proxy = $proxy;
+        return $request;
     }
     
     
@@ -195,112 +171,15 @@ class Request
         
         return new Request($get, $post, $cookies, $files, $server, $body);
     }
-    
-    /**
-     * Sets a list of trusted proxies.
-     *
-     * You should only list the reverse proxies that you manage directly.
-     *
-     * @param array $proxies A list of trusted proxies
-     */
-    
-    public static function setTrustedProxies(array $proxies)
-    {
-        self::$trustedProxies = $proxies;
-    }
 
-    /**
-     * Gets the list of trusted proxies.
-     *
-     * @return array An array of trusted proxies.
-     */
-    
-    public static function getTrustedProxies()
-    {
-        return self::$trustedProxies;
-    }
-
-    /**
-     * Sets a list of trusted host patterns.
-     *
-     * You should only list the hosts you manage using regexs.
-     *
-     * @param array $hostPatterns A list of trusted host patterns
-     */
-    
-    public static function setTrustedHosts(array $hostPatterns)
-    {
-        self::$trustedHostPatterns = array_map(function ($hostPattern) {
-            return sprintf('{%s}i', str_replace('}', '\\}', $hostPattern));
-        }, $hostPatterns);
-        // we need to reset trusted hosts on trusted host patterns change
-        self::$trustedHosts = array();
-    }
-
-    /**
-     * Gets the list of trusted host patterns.
-     *
-     * @return array An array of trusted host patterns.
-     */
-    
-    public static function getTrustedHosts()
-    {
-        return self::$trustedHostPatterns;
-    }
-
-    /**
-     * Sets the name for trusted headers.
-     *
-     * The following header keys are supported:
-     *
-     *  * Request::HEADER_CLIENT_IP:    defaults to X-Forwarded-For
-     *  * Request::HEADER_CLIENT_HOST:  defaults to X-Forwarded-Host
-     *  * Request::HEADER_CLIENT_PORT:  defaults to X-Forwarded-Port
-     *  * Request::HEADER_CLIENT_PROTO: defaults to X-Forwarded-Proto
-     *
-     * Setting an empty value allows to disable the trusted header for the given key.
-     *
-     * @param string $key   The header key
-     * @param string $value The header name
-     *
-     * @throws \InvalidArgumentException
-     */
-    
-    public static function setTrustedHeaderName($key, $value)
-    {
-        if (!array_key_exists($key, self::$trustedHeaders))
-        {
-            throw new \InvalidArgumentException(sprintf('Unable to set the trusted header name for key "%s".', $key));
-        }
-
-        self::$trustedHeaders[$key] = $value;
-    }
-
-    /**
-     * Gets the trusted proxy header name.
-     *
-     * @param string $key The header key
-     *
-     * @return string The header name
-     *
-     * @throws \InvalidArgumentException
-     */
-    
-    public static function getTrustedHeaderName($key)
-    {
-        if (!array_key_exists($key, self::$trustedHeaders))
-        {
-            throw new \InvalidArgumentException(sprintf('Unable to get the trusted header name for key "%s".', $key));
-        }
-        
-        return self::$trustedHeaders[$key];
-    }
     
     /**
      * Normalizes a query string.
      *
      * It builds a normalized query string, where keys/value pairs are alphabetized,
      * have consistent escaping and unneeded delimiters are removed.
+     *
+     * @author Fabien Potencier <fabien@symfony.com>
      *
      * @param string $qs Query string
      *
@@ -681,7 +560,7 @@ class Request
     {
         if(!isset($this->info['is_secure']))
         {
-            if (self::$trustedProxies && self::$trustedHeaders[self::HEADER_CLIENT_PROTO] && $proto = $this->header(self::$trustedHeaders[self::HEADER_CLIENT_PROTO]))
+            if($this->proxy !== null && $proto = $this->proxy->getProto($this))
             {
                 $this->info['is_secure'] = in_array(strtolower(current(explode(',', $proto))), array('https', 'on', 'ssl', '1'));
             }
@@ -1026,9 +905,9 @@ class Request
     
     protected function resolveHost()
     {
-        if(self::$trustedProxies && self::$trustedHeaders[self::HEADER_CLIENT_HOST] && $host = $this->header(self::$trustedHeaders[self::HEADER_CLIENT_HOST]))
+        if($this->proxy !== null && $host = $this->proxy->getHost($this))
         {
-            $host = end(explode(',', $host));
+            $host = trim(end(explode(',', $host)));
         }
         elseif(!$host = $this->header('HOST'))
         {
@@ -1045,22 +924,8 @@ class Request
             throw new \UnexpectedValueException(sprintf('Invalid Host "%s"', $host));
         }
         
-        if(count(self::$trustedHostPatterns) > 0)
+        if($this->proxy !== null && !$this->proxy->isTrustedHost($host))
         {
-            if(in_array($host, self::$trustedHosts))
-            {
-                return $host;
-            }
-            
-            foreach (self::$trustedHostPatterns as $pattern)
-            {
-                if (preg_match($pattern, $host))
-                {
-                    self::$trustedHosts[] = $host;
-                    return $host;
-                }
-            }
-            
             throw new \UnexpectedValueException(sprintf('Untrusted Host "%s"', $host));
         }
         
@@ -1069,14 +934,13 @@ class Request
     
     protected function resolvePort()
     {
-        if(self::$trustedProxies)
+        if($this->proxy !== null)
         {
-            if(self::$trustedHeaders[self::HEADER_CLIENT_PORT] && $port = $this->header(self::$trustedHeaders[self::HEADER_CLIENT_PORT]))
+            if($port = $this->proxy->getPort($this))
             {
                 return $port;
             }
-            
-            if(self::$trustedHeaders[self::HEADER_CLIENT_PROTO] && 'https' === $this->header(self::HEADER_CLIENT_PROTO, 'http'))
+            if('https' === $this->proxy->getProto($this, 'http'))
             {
                 return 443;
             }
@@ -1109,25 +973,26 @@ class Request
     private function resolveClientIps()
     {
         $ip = $this->server('REMOTE_ADDR');
-        if(!self::$trustedProxies)
+        if($this->proxy === null || $this->proxy->getIp($this) === null)
         {
             return array($ip);
         }
         
-        if (!self::$trustedHeaders[self::HEADER_CLIENT_IP] || $this->header(self::$trustedHeaders[self::HEADER_CLIENT_IP]) === null)
-        {
-            return array($ip);
-        }
-        
-        $clientIps = array_map('trim', explode(',', $this->headers->get(self::$trustedHeaders[self::HEADER_CLIENT_IP])));
+        $clientIps = array_map('trim', explode(',', $this->proxy->getIp($this)));
         $clientIps[] = $ip;
         
-        $trustedProxies = !self::$trustedProxies ? array($ip) : self::$trustedProxies;
+        $trustedProxies = $this->proxy->getProxies();
+        
+        if(empty($trustedProxies))
+        {
+            $trustedProxies = array($ip);
+        }
+        
         $ip = $clientIps[0];
         
         foreach ($clientIps as $key => $clientIp)
         {
-            if (IpUtils::checkIp($clientIp, $trustedProxies))
+            if ($this->proxy->checkIp($clientIp, $trustedProxies))
             {
                 unset($clientIps[$key]);
             }
