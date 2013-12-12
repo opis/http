@@ -22,8 +22,6 @@ namespace Opis\Http;
 
 use Closure;
 use Opis\Http\ResponseContainerInterface;
-use Opis\Http\Cotainer\Stream;
-use Opis\Http\Container\File;
 
 class Response
 {
@@ -49,14 +47,11 @@ class Response
     /** @var array Cookies. */
     protected $cookies = array();
     
-    /** @var boolean Compress output? */
+    /** @var boolean Compress output flag */
     protected $outputCompression;
     
-    /** @var boolean Enable response cache? */
+    /** @var boolean Enable response cache flag */
     protected $responseCache;
-    
-    /** @var array Output filters. */
-    protected $outputFilters = array();
     
     /** @var array HTTP status codes. */
     protected $statusCodes = array(
@@ -218,33 +213,6 @@ class Response
         return $this;
     }
     
-    /**
-     * Adds output filter that all output will be passed through before being sent.
-     *
-     * @access public
-     * @param \Closure $filter Closure used to filter output
-     * @return \Opis\Http\Response
-     */
-    
-    public function filter(Closure $filter)
-    {
-        $this->outputFilters[] = $filter;
-        return $this;
-    }
-    
-    /**
-     * Clears all output filters.
-     *
-     * @access public
-     * @return \Opis\Http\Response
-     */
-    
-    public function clearFilters()
-    {
-        $this->outputFilters = array();
-        return $this;
-    }
-    
     
     /**
      * Sets a response header.
@@ -385,32 +353,6 @@ class Response
         $this->outputCompression = $value;
         return $this;
     }
-    
-    
-    /**
-     * Returns a stream container.
-     *
-     * @access public
-     * @param \Closure $stream Stream
-     * @return \Opis\Http\StreamContainer
-     */
-    
-    public function stream(Closure $stream)
-    {
-        return new Stream($stream);
-    }
-    
-    /**
-     * Return a file container
-     *
-     * @access public
-     * 
-     */
-    
-    public function file($file, array $options = array())
-    {
-        return new File($file, $options);
-    }
         
         
     /**
@@ -458,52 +400,53 @@ class Response
             $this->body->send($this->request, $this);
         }
         else
-        {
-            $sendBody = true;
+        {   
             // Make sure that output buffering is enabled
             if(ob_get_level() === 0)
             {
                 ob_start();
             }
-            // Run body through the response filters
-            foreach($this->outputFilters as $outputFilter)
-            {
-                $this->body = $outputFilter($this->body);
-            }
+            
+            $body = (string) $this->body;
+            
             // Check ETag if response cache is enabled
             if($this->responseCache === true)
             {
-                $hash = '"' . sha1($this->body) . '"';
+                $hash = '"' . sha1($body) . '"';
                 $this->header('ETag', $hash);
                 if($this->request->header('if-none-match') === $hash)
                 {
                     $this->status(304);
-                    $sendBody = false;
                 }
             }
             
-            if($sendBody && !in_array($this->statusCode, array(100, 101, 102, 204, 304)))
+            if(!in_array($this->statusCode, array(100, 101, 102, 204, 304)))
             {
                 // Start compressed output buffering if output compression is enabled
                 if($this->outputCompression)
                 {
                     ob_start('ob_gzhandler');
                 }
-                echo $this->body;
+                
+                echo $body;
+                
                 // If output compression is enabled then we'll have to flush the compressed buffer
                 // so that we can get the compressed content length when setting the content-length header
                 if($this->outputCompression)
                 {
                     ob_end_flush();
                 }
+                
                 // Add the content-length header
                 if(!array_key_exists('transfer-encoding', $this->headers))
                 {
                     $this->header('content-length', ob_get_length());
                 }
             }
+            
             // Send the headers and flush the output buffer
             $this->sendHeaders();
+            
             ob_end_flush();
         }
     }
