@@ -725,6 +725,14 @@ class Request
             {
                 $method = $this->server('HTTP_X_HTTP_METHOD_OVERRIDE');
             }
+            else
+            {
+                $method = strtoupper(trim($this->post('_method', 'POST')));
+                if(!in_array($method, array('PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'TRACE', 'CONNECT')))
+                {
+                    $method = 'POST';
+                }
+            }
         }
         return strtoupper($method);
     }
