@@ -40,7 +40,7 @@ class ProxyHandler
             $host = str_replace('*', '.*', $host);
             foreach($placeholders as $key => $value)
             {
-                $host = str_replace('{' . $key . '}', $value);
+                $host = str_replace('{' . $key . '}', $value, $value);
             }
             $this->hosts[] = $host;
         }
