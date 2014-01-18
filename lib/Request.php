@@ -41,8 +41,12 @@ class Request
      * @param   string  $body       Request body
      */
 
-    public function __construct(array $get, array $post, array $cookies,
-                                array $files, array $server, $body = null)
+    public function __construct(array $get,
+                                array $post,
+                                array $cookies,
+                                array $files,
+                                array $server,
+                                $body = null)
     {
         $this->request = array(
             'get' => $get,
