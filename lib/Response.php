@@ -293,10 +293,10 @@ class Response
     /**
      * Sends response headers.
      *
-     * @access protected
+     * @access public
      */
     
-    protected function sendHeaders()
+    public function sendHeaders()
     {
         // Send status header
         if($this->request->server('FCGI_SERVER_VERSION', false) !== false)
