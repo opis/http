@@ -63,10 +63,6 @@ class File implements ResponseContainerInterface
         );
     }
 
-    //---------------------------------------------
-    // Class methods
-    //---------------------------------------------
-
     /**
      * Determine the content range that should be served.
      * 
