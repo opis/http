@@ -20,9 +20,6 @@
 
 namespace Opis\Http;
 
-use Closure;
-use Opis\Http\ResponseContainerInterface;
-
 class Response
 {
   
@@ -151,8 +148,9 @@ class Response
         {
             $error  = 'The response body must be a string or an object implementing __toString() ';
             $error .= 'or Opis\Http\ResponseContainerInterface. %s given';
-            throw new \UnexpectedValueException(sprintf($error, gettype($content)));
+            throw new \UnexpectedValueException(sprintf($error, gettype($body)));
         }
+        
         $this->body = $body;
         return $this;
     }
