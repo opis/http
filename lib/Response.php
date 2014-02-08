@@ -144,7 +144,16 @@ class Response
     
     public function body($body)
     {
-        $this->body = ($body instanceof $this) ? $body->getBody() : $body;
+        if(!($body instanceof ResponseContainerInterface) &&
+           !is_string($body) &&
+           !is_numeric($body) &&
+           !is_callable(array($body, '__toString')))
+        {
+            $error  = 'The response body must be a string or an object implementing __toString() ';
+            $error .= 'or Opis\Http\ResponseContainerInterface. %s given';
+            throw new \UnexpectedValueException(sprintf($error, gettype($content)));
+        }
+        $this->body = $body;
         return $this;
     }
     
@@ -298,7 +307,11 @@ class Response
     
     public function sendHeaders()
     {
-        // Send status header
+        if(headers_sent())
+        {
+            return;
+        }
+        
         if($this->request->server('FCGI_SERVER_VERSION', false) !== false)
         {
             $protocol = 'Status:';
@@ -309,18 +322,21 @@ class Response
         }
         
         header($protocol . ' ' . $this->statusCode . ' ' . $this->statusCodes[$this->statusCode]);
-        // Send content type header
+        
         $contentType = $this->contentType;
+        
         if(stripos($contentType, 'text/') === 0 || in_array($contentType, array('application/json', 'application/xml')))
         {
             $contentType .= '; charset=' . $this->charset;
         }
+        
         header('Content-Type: ' . $contentType);
-        // Send other headers
+        
         foreach($this->headers as $name => $value)
         {
             header($name . ': ' . $value);
         }
+        
         // Send cookie headers
         foreach($this->cookies as $cookie)
         {
