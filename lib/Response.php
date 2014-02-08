@@ -142,6 +142,7 @@ class Response
     public function body($body)
     {
         if(!($body instanceof ResponseContainerInterface) &&
+           !is_null($body) &&
            !is_string($body) &&
            !is_numeric($body) &&
            !is_callable(array($body, '__toString')))
