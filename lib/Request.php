@@ -529,7 +529,7 @@ class Request
         {
             if(null !== $qs = $this->queryString())
             {
-                $qs .= '?' . $qs;
+                $qs = '?' . $qs;
             }
             $this->info['uri'] = $this->schemeAndHttpHost() . $this->baseUrl() . $this->path() . $qs;
         }
