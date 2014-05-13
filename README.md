@@ -14,7 +14,7 @@ This library is available on [Packagist](https://packagist.org/packages/opis/htt
 ```json
 {
     "require": {
-        "opis/http": "1.2.*"
+        "opis/http": "1.3.*"
     }
 }
 ```
