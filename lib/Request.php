@@ -291,7 +291,12 @@ class Request
 
     public function get($key = null, $default = null)
     {
-        return ($key === null) ? $this->request['get'] : isset($this->request['get'][$key]) ? $this->request['get'][$key] : $default;
+        if($key === null)
+        {
+            return $this->request['get'];
+        }
+        
+        return isset($this->request['get'][$key]) ? $this->request['get'][$key] : $default;
     }
 
     /**
@@ -305,7 +310,12 @@ class Request
 
     public function post($key = null, $default = null)
     {
-        return ($key === null) ? $this->request['post'] : isset($this->request['post'][$key]) ? $this->request['post'][$key] : $default;
+        if($key === null)
+        {
+            return $this->request['post'];
+        }
+        
+        return isset($this->request['post'][$key]) ? $this->request['post'][$key] : $default;
     }
 
     /**
@@ -361,7 +371,12 @@ class Request
 
     public function cookie($name = null, $default = null)
     {
-        return ($name === null) ? $this->request['cookies'] : isset($this->request['cookies'][$name]) ? $this->request['cookies'][$name] : $default;
+        if($name === null)
+        {
+            return $this->request['cookies'];
+        }
+        
+        return isset($this->request['cookies'][$name]) ? $this->request['cookies'][$name] : $default;
     }
     
     
@@ -376,7 +391,12 @@ class Request
 
     public function file($key = null, $default = null)
     {
-        return ($key === null) ? $this->request['files'] : isset($this->request['files'][$key]) ? $this->request['files'][$key] : $default;
+        if($key === null)
+        {
+            return $this->request['files'];
+        }
+        
+        return isset($this->request['files'][$key]) ? $this->request['files'][$key] : $default;
     }
 
     /**
@@ -390,7 +410,12 @@ class Request
 
     public function server($key = null, $default = null)
     {
-        return ($key === null) ? $this->request['server'] : isset($this->request['server'][$key]) ? $this->request['server'][$key] : $default;
+        if($key === null)
+        {
+            return $this->request['server'];
+        }
+        
+        return isset($this->request['server'][$key]) ? $this->request['server'][$key] : $default;
     }
 
     /**
