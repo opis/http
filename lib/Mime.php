@@ -813,7 +813,17 @@ class Mime
     
     public static function get($file, $guess = true)
     {
-        if(function_exists('finfo_open'))
+        if($guess === true)
+        {
+            $extension = pathinfo($file, PATHINFO_EXTENSION);
+            
+            if(isset(self::$defaultMime[$extension]))
+            {
+                return self::$defaultMime[$extension];
+            }
+            
+        }
+        elseif(function_exists('finfo_file'))
         {
             // Get mime using the file information functions
             $info = finfo_open(FILEINFO_MIME_TYPE);
@@ -821,12 +831,8 @@ class Mime
             finfo_close($info);
             return $mime;
         }
-        elseif($guess === true)
-        {
-            // Just guess mime by using the file extension
-            $extension = pathinfo($file, PATHINFO_EXTENSION);
-            return isset(self::$defaultMime[$extension]) ? self::$defaultMime[$extension] : false;
-        }
-        return false;
+        
+        return 'text/plain';
+        
     }
 }
