@@ -61,9 +61,9 @@ class Resource implements ResponseContainerInterface
 
     public function send(Request $request, Response $response)
     {
-        // Add headers that should always be included
         $response->type(Mime::get($this->filePath));
         $response->header('accept-ranges', 'bytes');
+        $response->sendHeaders();
         $response->body(file_get_contents($this->filePath));
         $response->send();
     }
