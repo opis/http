@@ -417,10 +417,7 @@ class Response
         else
         {   
             // Make sure that output buffering is enabled
-            if(ob_get_level() === 0)
-            {
-                ob_start();
-            }
+            ob_start();
             
             $body = (string) $this->body;
             
