@@ -146,9 +146,7 @@ class Response
            !is_numeric($body) &&
            !is_callable(array($body, '__toString')))
         {
-            $error  = 'The response body must be a string or an object implementing __toString() ';
-            $error .= 'or Opis\Http\HttpResponseInterface. %s given';
-            throw new \UnexpectedValueException(sprintf($error, gettype($body)));
+            throw new \UnexpectedValueException(sprintf("Invalid body type %s", gettype($body)));
         }
         
         $this->body = $body;
