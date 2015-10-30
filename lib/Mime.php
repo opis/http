@@ -823,16 +823,11 @@ class Mime
             }
             
         }
-        elseif(function_exists('finfo_file'))
-        {
-            // Get mime using the file information functions
-            $info = finfo_open(FILEINFO_MIME_TYPE);
-            $mime = finfo_file($info, $file);
-            finfo_close($info);
-            return $mime;
-        }
         
-        return 'text/plain';
-        
+        // Get mime using the file information functions
+        $info = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($info, $file);
+        finfo_close($info);
+        return $mime;
     }
 }

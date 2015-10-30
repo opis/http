@@ -47,7 +47,7 @@ class Response
     /** @var boolean Compress output flag */
     protected $outputCompression;
     
-    /** @var boolean Enable response cache flag */
+    /** @var boolean Enable cache flag */
     protected $responseCache;
     
     /** @var array HTTP status codes. */
@@ -119,12 +119,11 @@ class Response
     /**
      * Constructor.
      *
-     * @access public
-     * @param \Opis\Http\Request $request Request instance
-     * @param string $body (optional) Response body
+     * @param   \Opis\Http\Request  $request    Request instance
+     * @param   string              $body       (optional) Response body
      */
     
-    public function __construct(Request $request, $body = NULL)
+    public function __construct(Request $request, $body = null)
     {
         $this->request = $request;
         $this->body($body);
@@ -132,23 +131,23 @@ class Response
     
     
     /**
-     * Sets the response body.
+     * Set the response body.
      *
-     * @access public
-     * @param mixed $body Response body
-     * @return \Opis\Http\Response
+     * @param   mixed   $body   Response body
+     * 
+     * @return  \Opis\Http\Response
      */
     
     public function body($body)
     {
-        if(!($body instanceof ResponseContainerInterface) &&
+        if(!($body instanceof HttpResponseInterface) &&
            !is_null($body) &&
            !is_string($body) &&
            !is_numeric($body) &&
            !is_callable(array($body, '__toString')))
         {
             $error  = 'The response body must be a string or an object implementing __toString() ';
-            $error .= 'or Opis\Http\ResponseContainerInterface. %s given';
+            $error .= 'or Opis\Http\HttpResponseInterface. %s given';
             throw new \UnexpectedValueException(sprintf($error, gettype($body)));
         }
         
@@ -159,8 +158,7 @@ class Response
     /**
      * Returns the response body.
      *
-     * @access public
-     * @return mixed
+     * @return  mixed
      */
     
     public function getBody()
@@ -169,15 +167,15 @@ class Response
     }
     
     /**
-     * Sets the response content type.
+     * Sets the content type
      *
-     * @access public
-     * @param string $contentType Content type
-     * @param string $charset (optional) Charset
+     * @param   string  $contentType    Content type
+     * @param   string  $charset        (optional) Charset
+     * 
      * @return \Opis\Http\Response
      */
     
-    public function type($contentType, $charset = null)
+    public function contentType($contentType, $charset = null)
     {
         $this->contentType = $contentType;
         
@@ -190,11 +188,11 @@ class Response
     }
     
     /**
-     * Sets the response charset.
+     * Sets the charset.
      *
-     * @access public
-     * @param string $charset Charset
-     * @return \Opis\Http\Response
+     * @param   string  $charset    Charset
+     * 
+     * @return  \Opis\Http\Response
      */
     
     public function charset($charset)
@@ -207,7 +205,6 @@ class Response
     /**
      * Sets the HTTP status code.
      *
-     * @access public
      * @param int $statusCode HTTP status code
      * @return \Opis\Http\Response
      */
@@ -218,17 +215,18 @@ class Response
         {
             $this->statusCode = $statusCode;
         }
+        
         return $this;
     }
     
     
     /**
-     * Sets a response header.
+     * Add a header.
      *
-     * @access public
-     * @param string $name Header name
-     * @param string $value Header value
-     * @return \Opis\Http\Response
+     * @param   string  $name   Header name
+     * @param   string  $value  Header value
+     * 
+     * @return  \Opis\Http\Response
      */
     
     public function header($name, $value)
@@ -237,12 +235,29 @@ class Response
         return $this;
     }
     
+    /**
+     * Set multiple headers at once
+     *
+     * @param   array   $headers    Headers
+     * 
+     * @return  \Opis\Http\Response
+     */
+    
+    public function headers(array $headers)
+    {
+        foreach($headers as $name => $value)
+        {
+            $this->headers[strtolower($name)] = $value;
+        }
+        
+        return $this;
+    }
+    
     
     /**
-     * Clear the response headers.
+     * Clear the headers.
      *
-     * @access public
-     * @return \Opis\Http\Response
+     * @return  \Opis\Http\Response
      */
     
     public function clearHeaders()
@@ -252,14 +267,14 @@ class Response
     }
     
     /**
-     * Sets a cookie.
+     * Set a cookie.
      *
-     * @access public
-     * @param string $name Cookie name
-     * @param string $value Cookie value
-     * @param int $ttl (optional) Time to live - if omitted or set to 0 the cookie will expire when the browser closes
-     * @param array $options (optional) Cookie options
-     * @return \Opis\Http\Response
+     * @param   string  $name       Cookie name
+     * @param   string  $value      Cookie value
+     * @param   int     $ttl        (optional) Time to live
+     * @param   array   $options    (optional) Cookie options
+     * 
+     * @return  \Opis\Http\Response
      */
     
     public function cookie($name, $value, $ttl = 0, array $options = array())
@@ -274,9 +289,9 @@ class Response
     /**
      * Deletes a cookie.
      *
-     * @access public
-     * @param string $name Cookie name
-     * @param array $options (optional) Cookie options
+     * @param   string  $name       Cookie name
+     * @param   array   $options    (optional) Cookie options
+     * 
      * @return \Opis\Http\Response
      */
     
@@ -288,8 +303,7 @@ class Response
     /**
      * Clear cookies.
      *
-     * @access public
-     * @return \Opis\Http\Response
+     * @return  \Opis\Http\Response
      */
     
     public function clearCookies()
@@ -336,7 +350,6 @@ class Response
             header($name . ': ' . $value);
         }
         
-        // Send cookie headers
         foreach($this->cookies as $cookie)
         {
             setcookie($cookie['name'], $cookie['value'], $cookie['ttl'], $cookie['path'], $cookie['domain'], $cookie['secure'], $cookie['httponly']);
@@ -346,8 +359,7 @@ class Response
     /**
      * Enables ETag response cache.
      *
-     * @access public
-     * @return \Opis\Http\Response
+     * @return  \Opis\Http\Response
      */
     
     public function cache($value = true)
@@ -359,7 +371,6 @@ class Response
     /**
      * Enables output compression.
      *
-     * @access public
      * @return \Opis\Http\Response
      */
     
@@ -373,14 +384,12 @@ class Response
     /**
      * Redirects to another location.
      *
-     * @access public
-     * @param string $location (optional) Location
-     * @param int $statusCode (optional) HTTP status code
+     * @param   string  $location   (optional) Location
+     * @param   int     $statusCode (optional) HTTP status code
      */
     
     public function redirect($location = '', $statusCode = 302)
     {
-        
         $this->status($statusCode);
         
         $this->header('Location', $location);
@@ -393,8 +402,7 @@ class Response
     /**
      * Redirects the user back to the previous page.
      *
-     * @access public
-     * @param int $statusCode (optional) HTTP status code
+     * @param   int $statusCode (optional) HTTP status code
      */
     
     public function back($statusCode = 302)
@@ -410,57 +418,42 @@ class Response
     
     public function send()
     {
-        if($this->body instanceof ResponseContainerInterface)
+        if($this->body instanceof HttpResponseInterface)
         {
-            $this->body->send($this->request, $this);
+            $this->body->handle($this->request, $this);
         }
         else
         {   
-            // Make sure that output buffering is enabled
             ob_start();
             
             $body = (string) $this->body;
             
-            // Check ETag if response cache is enabled
-            if($this->responseCache === true)
+            if(in_array($this->statusCode, array(100, 101, 102, 204, 205, 304)))
             {
-                $hash = '"' . sha1($body) . '"';
-                $this->header('ETag', $hash);
-                if($this->request->header('if-none-match') === $hash)
-                {
-                    $this->status(304);
-                }
+                goto FINISH;
             }
             
-            if(!in_array($this->statusCode, array(100, 101, 102, 204, 304)))
+            if($this->outputCompression)
             {
-                // Start compressed output buffering if output compression is enabled
-                if($this->outputCompression)
-                {
-                    ob_start('ob_gzhandler');
-                }
-                
+                ob_start('ob_gzhandler');
                 echo $body;
-                
-                // If output compression is enabled then we'll have to flush the compressed buffer
-                // so that we can get the compressed content length when setting the content-length header
-                if($this->outputCompression)
-                {
-                    ob_end_flush();
-                }
-                
-                // Add the content-length header
-                if(!array_key_exists('transfer-encoding', $this->headers))
-                {
-                    $this->header('content-length', ob_get_length());
-                }
+                ob_end_flush();
+            }
+            else
+            {
+                echo $body;
             }
             
-            // Send the headers and flush the output buffer
+            if(!array_key_exists('transfer-encoding', $this->headers))
+            {
+                $this->header('content-length', ob_get_length());
+            }
+            
+            FINISH:
+            
             $this->sendHeaders();
             
             ob_end_flush();
         }
     }
-    
 }

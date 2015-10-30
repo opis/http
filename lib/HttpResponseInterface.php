@@ -20,7 +20,7 @@
 
 namespace Opis\Http;
 
-interface ResponseContainerInterface
+interface HttpResponseInterface
 {
-    function send(Request $request, Response $response);
+    public function handle(Request $request, Response $response);
 }

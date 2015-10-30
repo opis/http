@@ -17,21 +17,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * ============================================================================ */
+
 namespace Opis\Http;
 
 class Request
-{    
-
-    protected $info = array();
-    
-    protected $request = array();
-    
+{
+    /** @var    \Opis\Http\ProxyHandler Proxy */
     protected $proxy;
+    
+    /** @var    array   Cache   */  
+    protected $cache = array();
+    
+    /** @var    array   Request */
+    protected $request = array();
     
     /**
      * Constructor.
      *
-     * @access  public
      * @param   array   $get        GET data
      * @param   array   $post       POST data
      * @param   array   $cookies    Cookie data
@@ -58,7 +60,15 @@ class Request
         
         $this->request['headers'] = $this->resolveHeaders();
     }
-
+    
+    /**
+     * Creates a new reequest object using the global variables
+     *
+     * @param   \Opis\Http\ProxyHandler $proxy  Proxy
+     *
+     * @return  \Opis\Http\Request
+     */
+    
     public static function fromGlobals(ProxyHandler $proxy = null)
     {
         $request = new Request($_GET, $_POST, $_COOKIE, $_FILES, $_SERVER, null);
@@ -67,7 +77,7 @@ class Request
     }
     
     
-    public static function create($uri, $method = 'GET', array $input = array(), array $cookies = array(), array $files = array(), array $server = array(), $body = null)
+    public static function create($url, $method = 'GET', array $input = array(), array $cookies = array(), array $files = array(), array $server = array(), $body = null)
     {
         $server = array_replace(array(
             'SERVER_NAME' => 'localhost',
@@ -86,8 +96,9 @@ class Request
         
         $server['PATH_INFO'] = '';
         $server['REQUEST_METHOD'] = strtoupper($method);
-
-        $components = parse_url($uri);
+        
+        $components = parse_url($url);
+        
         if (isset($components['host']))
         {
             $server['SERVER_NAME'] = $components['host'];
@@ -150,6 +161,7 @@ class Request
         }
         
         $queryString = '';
+        
         if (isset($components['query']))
         {
             parse_str(html_entity_decode($components['query']), $qs);
@@ -174,7 +186,6 @@ class Request
         
         return new Request($get, $post, $cookies, $files, $server, $body);
     }
-
     
     /**
      * Normalizes a query string.
@@ -223,20 +234,20 @@ class Request
         return implode('&', $parts);
     }
     
+    
     public function response()
     {
-        if(!isset($this->info['response']))
+        if(!isset($this->cache['response']))
         {
-            $this->info['response'] = new Response($this);
+            $this->cache['response'] = new Response($this);
         }
-        return $this->info['response'];
+        return $this->cache['response'];
     }
     
     /**
      * Returns the raw request body.
-     *
-     * @access public
-     * @return string
+     * 
+     * @return  string
      */
 
     public function body()
@@ -245,23 +256,25 @@ class Request
         {
             $this->request['body'] = file_get_contents('php://input');
         }
+        
         return $this->request['body'];
     }
     
     /**
-     * Parses the request body and returns the chosen value.
-     *
-     * @access protected
-     * @param string $key Array key
-     * @param mixed $default Default value
-     * @return mixed
+     * Parse the request body and returns the value on the specified key.
+     * 
+     * @param   string      $key        Key
+     * @param   mixed       $default    Default value
+     * 
+     * @return  mixed
      */
 
     protected function getParsed($key, $default)
     {
-        if(!isset($this->info['parsed_body']))
+        if(!isset($this->cache['parsed_body']))
         {
             $parsedBody = array();
+            
             switch($this->header('content-type'))
             {
                 case 'application/x-www-form-urlencoded':
@@ -273,19 +286,25 @@ class Request
                     $parsedBody = json_decode($this->body(), true);
                     break;
             }
-            $this->info['parsed_body'] = $parsedBody;
+            
+            $this->cache['parsed_body'] = $parsedBody;
         }
         
-        return ($key === null) ? $this->info['parsed_body']: isset($this->info['parsed_body'][$key]) ? $this->info['parsed_body'][$key] : $default;
+        if($key === null)
+        {
+            return $this->cache['parsed_body'];
+        }
+        
+        return isset($this->cache['parsed_body'][$key]) ? $this->cache['parsed_body'][$key] : $default;
     }
     
     /**
-     * Fetch data from the GET parameters.
+     * Retrieves data from the GET parameters.
      *
-     * @access public
-     * @param string $key (optional) Array key
-     * @param mixed $default (optional) Default value
-     * @return mixed
+     * @param   string  $key        (optional) Key
+     * @param   mixed   $default    (optional) Default value
+     * 
+     * @return  mixed
      */
 
     public function get($key = null, $default = null)
@@ -299,12 +318,12 @@ class Request
     }
 
     /**
-     * Fetch data from the POST parameters.
+     * Retrieves data from the POST parameters.
      *
-     * @access public
-     * @param string $key (optional) Array key
-     * @param mixed $default (optional) Default value
-     * @return mixed
+     * @param   string  $key        (optional) Key
+     * @param   mixed   $default    (optional) Default value
+     * 
+     * @return  mixed
      */
 
     public function post($key = null, $default = null)
@@ -318,12 +337,12 @@ class Request
     }
 
     /**
-     * Fetch data from the PUT parameters.
+     * Retrieves data from the PUT parameters.
      *
-     * @access public
-     * @param string $key (optional) Array key
-     * @param mixed $default (optional) Default value
-     * @return mixed
+     * @param   string  $key        (optional) Key
+     * @param   mixed   $default    (optional) Default value
+     * 
+     * @return  mixed
      */
 
     public function put($key = null, $default = null)
@@ -332,12 +351,12 @@ class Request
     }
 
     /**
-     * Fetch data from the PATCH parameters.
+     * Retrieves data from the PATCH parameters.
      *
-     * @access public
-     * @param string $key (optional) Array key
-     * @param mixed $default (optional) Default value
-     * @return mixed
+     * @param   string  $key        (optional) Key
+     * @param   mixed   $default    (optional) Default value
+     * 
+     * @return  mixed
      */
 
     public function patch($key = null, $default = null)
@@ -346,12 +365,12 @@ class Request
     }
 
     /**
-     * Fetch data from the DELETE parameters.
+     * Retrieves data from the DELETE parameters.
      *
-     * @access public
-     * @param string $key (optional) Array key
-     * @param mixed $default (optional) Default value
-     * @return mixed
+     * @param   string  $key        (optional) Key
+     * @param   mixed   $default    (optional) Default value
+     * 
+     * @return  mixed
      */
 
     public function delete($key = null, $default = null)
@@ -360,12 +379,12 @@ class Request
     }
 
     /**
-     * Fetch signed cookie data.
+     * Retrieves cookie data.
      *
-     * @access public
-     * @param string $name (optional) Cookie name
-     * @param mixed $default (optional) Default value
-     * @return string
+     * @param   string  $name       (optional) Cookie name
+     * @param   mixed   $default    (optional) Default value
+     * 
+     * @return  string
      */
 
     public function cookie($name = null, $default = null)
@@ -380,12 +399,12 @@ class Request
     
     
     /**
-     * Fetch file data.
+     * Retrieves file data.
      *
-     * @access public
-     * @param string $key (optional) Array key
-     * @param mixed $default (optional) Default value
-     * @return mixed
+     * @param   string  $key        (optional) Key
+     * @param   mixed   $default    (optional) Default value
+     * 
+     * @return  mixed
      */
 
     public function file($key = null, $default = null)
@@ -399,12 +418,12 @@ class Request
     }
 
     /**
-     * Fetch server info.
+     * Retrieves server info.
      *
-     * @access public
-     * @param string $key (optional) Array key
-     * @param mixed $default (optional) Default value
-     * @return mixed
+     * @param   string  $key        (optional) Key
+     * @param   mixed   $default    (optional) Default value
+     * 
+     * @return  mixed
      */
 
     public function server($key = null, $default = null)
@@ -418,11 +437,11 @@ class Request
     }
 
     /**
-     * Returns a request header.
+     * Returns the value of the specified header
      *
-     * @access public
-     * @param string $name Header name
-     * @param mixed $default Default value
+     * @param   string  $name       Header's name
+     * @param   mixed   $default    Default value
+     * 
      * @return mixed
      */
 
@@ -432,133 +451,185 @@ class Request
         return isset($this->request['headers'][$name]) ? $this->request['headers'][$name] : $default;
     }
     
+    /**
+     * Returns the request's URI
+     *
+     * @return  string 
+     */
     
     public function requestUri()
     {
-        if(!isset($this->info['request_uri']))
+        if(!isset($this->cache['request_uri']))
         {
-            $this->info['request_uri'] = $this->resolveRequestUri();
+            $this->cache['request_uri'] = $this->resolveRequestUri();
         }
         
-        return $this->info['request_uri'];
-    }
-    
-    public function baseUrl()
-    {
-        if(!isset($this->info['base_url']))
-        {
-            $this->info['base_url'] = $this->resolveBaseUrl();
-        }
-        
-        return $this->info['base_url'];
-    }
-    
-    
-    public function basePath()
-    {
-        if(!isset($this->info['base_path']))
-        {
-            $this->info['base_path'] = $this->resolveBasePath();
-        }
-        
-        return $this->info['base_path'];
-    }
-    
-    
-    public function path()
-    {
-        if(!isset($this->info['path']))
-        {
-            $this->info['path'] = $this->resolvePath();
-        }
-        
-        return $this->info['path'];
+        return $this->cache['request_uri'];
     }
     
     /**
-     * Returns current script name.
+     * Returns the request's base URL
      *
-     * @access public
-     * @return string
+     * @return  string 
+     */
+    
+    public function baseUrl()
+    {
+        if(!isset($this->cache['base_url']))
+        {
+            $this->cache['base_url'] = $this->resolveBaseUrl();
+        }
+        
+        return $this->cache['base_url'];
+    }
+    
+    /**
+     * Returns the request's base path
+     *
+     * @return  string 
+     */
+    
+    public function basePath()
+    {
+        if(!isset($this->cache['base_path']))
+        {
+            $this->cache['base_path'] = $this->resolveBasePath();
+        }
+        
+        return $this->cache['base_path'];
+    }
+    
+    /**
+     * Returns the request's path
+     *
+     * @return  string 
+     */
+        
+    public function path()
+    {
+        if(!isset($this->cache['path']))
+        {
+            $this->cache['path'] = $this->resolvePath();
+        }
+        
+        return $this->cache['path'];
+    }
+    
+    /**
+     * Returns the name of the current script
+     *
+     * @return  string
      */
     
     public function scriptName()
     {
-        if(!isset($this->info['script_name']))
+        if(!isset($this->cache['script_name']))
         {
-            $this->info['script_name'] = $this->server('SCRIPT_NAME', $this->server('ORIG_SCRIPT_NAME', ''));
+            $this->cache['script_name'] = $this->server('SCRIPT_NAME', $this->server('ORIG_SCRIPT_NAME', ''));
         }
-        return $this->info['script_name'];
+        
+        return $this->cache['script_name'];
     }
     
     /**
      * The request's scheme.
      *
-     * @access public
-     * @return string
+     * @return  string
      */
+    
     public function scheme()
     {
-        if(!isset($this->info['scheme']))
+        if(!isset($this->cache['scheme']))
         {
-            $this->info['scheme'] = $this->isSecure() ? 'https' : 'http';
+            $this->cache['scheme'] = $this->isSecure() ? 'https' : 'http';
         }
         
-        return $this->info['scheme'];
+        return $this->cache['scheme'];
     }
+    
+    /**
+     * Returns the port on which the request was made
+     *
+     * @return  string
+     */
     
     public function port()
     {
-        if(!isset($this->info['port']))
+        if(!isset($this->cache['port']))
         {
-            $this->info['port'] = $this->resolvePort();
+            $this->cache['port'] = $this->resolvePort();
         }
         
-        return $this->info['port'];
+        return $this->cache['port'];
     }
+    
+    /**
+     * Returns the host name
+     *
+     * @return  string
+     */
     
     public function host()
     {
-        if(!isset($this->info['host']))
+        if(!isset($this->cache['host']))
         {
-            $this->info['host'] = $this->resolveHost();
+            $this->cache['host'] = $this->resolveHost();
         }
         
-        return $this->info['host'];
+        return $this->cache['host'];
     }
+    
+    /**
+     * Get the host
+     *
+     * @return  string
+     */
     
     public function httpHost()
     {
-        if(!isset($this->info['http_host']))
+        if(!isset($this->cache['http_host']))
         {
-            $this->info['http_host'] = $this->resolveHttpHost();
+            $this->cache['http_host'] = $this->resolveHttpHost();
         }
         
-        return $this->info['http_host'];
+        return $this->cache['http_host'];
     }
+    
+    /**
+     * Get the host and the scheme used for the request
+     *
+     * @return  string
+     */
     
     public function schemeAndHttpHost()
     {
-        if(!isset($this->info['scheme_and_http_host']))
+        if(!isset($this->cache['scheme_and_http_host']))
         {
-            $this->info['scheme_and_http_host'] = $this->scheme() .'://' . $this->httpHost();
+            $this->cache['scheme_and_http_host'] = $this->scheme() .'://' . $this->httpHost();
         }
         
-        return  $this->info['scheme_and_http_host'];
+        return  $this->cache['scheme_and_http_host'];
     }
     
-    public function uri()
+    /**
+     * Get the full URL
+     *
+     * return   string
+     */
+    
+    public function url()
     {
-        if(!isset($this->info['uri']))
+        if(!isset($this->cache['url']))
         {
             if(null !== $qs = $this->queryString())
             {
                 $qs = '?' . $qs;
             }
-            $this->info['uri'] = $this->schemeAndHttpHost() . $this->baseUrl() . $this->path() . $qs;
+            
+            $this->cache['url'] = $this->schemeAndHttpHost() . $this->baseUrl() . $this->path() . $qs;
         }
         
-        return $this->info['uri'];
+        return $this->cache['url'];
     }
     
     public function uriForPath($path)
@@ -568,124 +639,124 @@ class Request
     
     public function queryString()
     {
-        if(!isset($this->info['query_string']))
+        if(!isset($this->cache['query_string']))
         {
             $qs = self::normalizeQueryString($this->server('QUERY_STRING'));
-            $this->info['query_string'] = ($qs === '') ? null : $qs;
+            $this->cache['query_string'] = ($qs === '') ? null : $qs;
         }
         
-        return $this->info['query_string'];
+        return $this->cache['query_string'];
     }
     
     /**
-     * Returns TRUE if the request was made using HTTPS and FALSE if not.
+     * Checks if the request was made using HTTPS
      *
-     * @access public
      * @return boolean
      */
 
     public function isSecure()
     {
-        if(!isset($this->info['is_secure']))
+        if(!isset($this->cache['is_secure']))
         {
             if($this->proxy !== null && $proto = $this->proxy->getProto($this))
             {
-                $this->info['is_secure'] = in_array(strtolower(current(explode(',', $proto))), array('https', 'on', 'ssl', '1'));
+                $this->cache['is_secure'] = in_array(strtolower(current(explode(',', $proto))), array('https', 'on', 'ssl', '1'));
             }
             else
             {
                 $https = $this->server('https');
-                $this->info['is_secure'] = strtolower($https) == 'on' || $https == 1;
+                $this->cache['is_secure'] = strtolower($https) == 'on' || $https == 1;
             }
         }
         
-        return $this->info['is_secure'];
+        return $this->cache['is_secure'];
     }
     
     /**
-     * Returns TRUE if the request was made using Ajax and FALSE if not.
+     * Checks if the request was made using AJAX
      *
-     * @access public
      * @return boolean
      */
 
     public function isAjax()
     {
-        if(!isset($this->info['is_ajax']))
+        if(!isset($this->cache['is_ajax']))
         {
-            $this->info['is_ajax'] = $this->header('X-Requested-With') === 'XMLHttpRequest' || $this->server('HTTP_X_REQUESTED_WITH') === 'XMLHttpRequest';
+            $this->cache['is_ajax'] = $this->header('X-Requested-With') === 'XMLHttpRequest' || $this->server('HTTP_X_REQUESTED_WITH') === 'XMLHttpRequest';
         }
         
-        return $this->info['is_ajax'];
+        return $this->cache['is_ajax'];
     }
 
     
     /**
      * Returns the request method that was used.
      *
-     * @access public
      * @return string
      */
 
     public function method()
     {
-        if(!isset($this->info['method']))
+        if(!isset($this->cache['method']))
         {
-            $this->info['method'] = $this->resolveMethod();
+            $this->cache['method'] = $this->resolveMethod();
         }
         
-        return $this->info['method'];
+        return $this->cache['method'];
     }
 
     /**
      * Returns the real request method that was used.
      *
-     * @access public
      * @return string
      */
 
     public function realMethod()
     {
-        if(!isset($this->info['real_method']))
+        if(!isset($this->cache['real_method']))
         {
-            $this->info['real_method'] = strtoupper($this->server('REQUEST_METHOD'), 'GET');
+            $this->cache['real_method'] = strtoupper($this->server('REQUEST_METHOD'), 'GET');
         }
         
-        return $this->info['real_method'];
-    }
-    
-    public function clientIps()
-    {
-        if(!isset($this->info['client_ips']))
-        {
-            $this->info['client_ips'] = $this->resolveClientIps();
-        }
-        
-        return $this->info['client_ips'];
+        return $this->cache['real_method'];
     }
     
     /**
-     * Returns the ip of the client that made the request.
+     * Returns the user's IP addresses
      *
-     * @access public
+     * @return  array
+     */
+    
+    public function clientIps()
+    {
+        if(!isset($this->cache['client_ips']))
+        {
+            $this->cache['client_ips'] = $this->resolveClientIps();
+        }
+        
+        return $this->cache['client_ips'];
+    }
+    
+    /**
+     * Returns the IP of the client that made the request.
+     *
      * @return string
      */
     
     public function ip()
     {
-        if(!isset($this->info['ip']))
+        if(!isset($this->cache['ip']))
         {
-            $this->info['ip'] = reset($this->clientIps());
+            $this->cache['ip'] = reset($this->clientIps());
         }
         
-        return $this->info['ip'];
+        return $this->cache['ip'];
     }
     
     
      /**
      * Returns the basic HTTP authentication username or NULL.
      *
-     * @access public
      * @return string
      */
 
@@ -697,7 +768,6 @@ class Request
     /**
      * Returns the basic HTTP authentication password or NULL.
      *
-     * @access public
      * @return string
      */
 
@@ -709,16 +779,15 @@ class Request
     /**
      * Returns the referer.
      *
-     * @access public
-     * @param string $default (optional) Value to return if no referer is set
-     * @return string
+     * @param   string  $default    (optional) Default value
+     * 
+     * @return  string
      */
 
     public function referer($default = '')
     {
         return $this->header('referer', $default);
     }
-    
     
     
     protected function resolveHeaders()
@@ -743,6 +812,7 @@ class Request
     protected function resolveMethod()
     {
         $method = strtoupper($this->server('REQUEST_METHOD', 'GET'));
+        
         if($method === 'POST')
         {
             if($this->post('REQUEST_METHOD_OVERRIDE') !== null)
@@ -756,12 +826,14 @@ class Request
             else
             {
                 $method = strtoupper(trim($this->post('_method', 'POST')));
+                
                 if(!in_array($method, array('PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'TRACE', 'CONNECT')))
                 {
                     $method = 'POST';
                 }
             }
         }
+        
         return strtoupper($method);
     }
     
@@ -823,8 +895,9 @@ class Request
     
     protected function resolveBaseUrl()
     {
-        $filename = basename($this->server('SCRIPT_FILENAME'));
         $baseUrl = '';
+        $filename = basename($this->server('SCRIPT_FILENAME'));
+        
         if(basename($this->server('SCRIPT_NAME')) === $filename)
         {
             $baseUrl = $this->server('SCRIPT_NAME');
@@ -842,10 +915,12 @@ class Request
             $file = $this->server('SCRIPT_FILENAME', '');
             $path = $this->server('PHP_SELF', '');
             $pos = strpos($path, '/', 1);
+            
             if($pos !== false)
             {
                 $seg = substr($path, 0, $pos + 1);
                 $pos = strpos($file, $seg);
+                
                 if($pos !== false)
                 {
                     $baseUrl = substr($file, $pos);
@@ -854,6 +929,7 @@ class Request
         }
         
         $requestUri = $this->requestUri();
+        
         if($baseUrl)
         {
             if(false !== $prefix = $this->getUrlencodedPrefix($requestUri, $baseUrl))
@@ -868,11 +944,14 @@ class Request
         }
         
         $truncatedRequestUri = $requestUri;
-        if (false !== $pos = strpos($requestUri, '?')) {
+        
+        if (false !== $pos = strpos($requestUri, '?'))
+        {
             $truncatedRequestUri = substr($requestUri, 0, $pos);
         }
         
         $basename = basename($baseUrl);
+        
         if (empty($basename) || !strpos(rawurldecode($truncatedRequestUri), $basename))
         {
             return '';
@@ -882,6 +961,7 @@ class Request
         {
             $baseUrl = substr($requestUri, 0, $pos + strlen($baseUrl));
         }
+        
         return rtrim($baseUrl, '/');
     }
     
@@ -976,6 +1056,7 @@ class Request
             {
                 return $port;
             }
+            
             if('https' === $this->proxy->getProto($this, 'http'))
             {
                 return 443;
