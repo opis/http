@@ -269,33 +269,33 @@ class Request
      * @return  mixed
      */
 
-    protected function getParsed($key, $default)
+    protected function getData($key, $default)
     {
-        if(!isset($this->cache['parsed_body']))
+        if(!isset($this->cache['data']))
         {
-            $parsedBody = array();
+            $data = array();
             
             switch($this->header('content-type'))
             {
                 case 'application/x-www-form-urlencoded':
-                    parse_str($this->body(), $parsedBody);
+                    parse_str($this->body(), $data);
                     break;
                 case 'text/json':
                 case 'application/json':
                 case 'application/x-json':
-                    $parsedBody = json_decode($this->body(), true);
+                    $data = json_decode($this->body(), true);
                     break;
             }
             
-            $this->cache['parsed_body'] = $parsedBody;
+            $this->cache['data'] = $data;
         }
         
         if($key === null)
         {
-            return $this->cache['parsed_body'];
+            return $this->cache['data'];
         }
         
-        return isset($this->cache['parsed_body'][$key]) ? $this->cache['parsed_body'][$key] : $default;
+        return isset($this->cache['data'][$key]) ? $this->cache['data'][$key] : $default;
     }
     
     /**
@@ -335,47 +335,27 @@ class Request
         
         return isset($this->request['post'][$key]) ? $this->request['post'][$key] : $default;
     }
-
+    
     /**
-     * Retrieves data from the PUT parameters.
+     * Retrieves data
      *
      * @param   string  $key        (optional) Key
      * @param   mixed   $default    (optional) Default value
      * 
      * @return  mixed
      */
-
-    public function put($key = null, $default = null)
+    
+    public function data($key = null, $default = null)
     {
-        return $this->getParsed($key, $default);
-    }
-
-    /**
-     * Retrieves data from the PATCH parameters.
-     *
-     * @param   string  $key        (optional) Key
-     * @param   mixed   $default    (optional) Default value
-     * 
-     * @return  mixed
-     */
-
-    public function patch($key = null, $default = null)
-    {
-        return $this->getParsed($key, $default);
-    }
-
-    /**
-     * Retrieves data from the DELETE parameters.
-     *
-     * @param   string  $key        (optional) Key
-     * @param   mixed   $default    (optional) Default value
-     * 
-     * @return  mixed
-     */
-
-    public function delete($key = null, $default = null)
-    {
-        return $this->getParsed($key, $default);
+        switch($this->realMethod())
+        {
+            case 'GET':
+                return $this->post($key, $default);
+            case 'POST':
+                return $this->post($key, $default);
+            default:
+                return $this->getData($key, $default);
+        }
     }
 
     /**
@@ -715,7 +695,7 @@ class Request
     {
         if(!isset($this->cache['real_method']))
         {
-            $this->cache['real_method'] = strtoupper($this->server('REQUEST_METHOD'), 'GET');
+            $this->cache['real_method'] = strtoupper($this->server('REQUEST_METHOD', 'GET'));
         }
         
         return $this->cache['real_method'];
