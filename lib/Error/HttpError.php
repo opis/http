@@ -22,16 +22,16 @@ namespace Opis\Http\Error;
 
 use Opis\Http\Request;
 use Opis\Http\Response;
-use Opis\Http\ResponseContainerInterface;
+use Opis\Http\HttpResponseInterface;
 
-class HttpError implements ResponseContainerInterface
+class HttpError implements HttpResponseInterface
 {
-    
-    protected $statusCode;
     
     protected $message;
     
     protected $headers;
+    
+    protected $statusCode;
     
     public function __construct($statusCode, $message = '', array $headers = array())
     {
@@ -42,11 +42,7 @@ class HttpError implements ResponseContainerInterface
     
     public function send(Request $request, Response $response)
     {
-        foreach($this->headers as $name => $value)
-        {
-            $response->header($name, $value);
-        }
-        
+        $response->headers($this->headers);
         $response->status($this->statusCode);
         $response->body($this->message);
         $response->send();

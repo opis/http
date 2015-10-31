@@ -23,9 +23,9 @@ namespace Opis\Http\Error;
 class NotFound extends HttpError
 {
     
-    public function __construct($message = '')
+    public function __construct($message = '', array $headers = array())
     {
-        parent::__construct(404, $message);
+        parent::__construct(404, $message, $headers);
     }
     
 }

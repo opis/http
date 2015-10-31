@@ -44,12 +44,6 @@ class Response
     /** @var array Cookies. */
     protected $cookies = array();
     
-    /** @var boolean Compress output flag */
-    protected $outputCompression;
-    
-    /** @var boolean Enable cache flag */
-    protected $responseCache;
-    
     /** @var array HTTP status codes. */
     protected $statusCodes = array(
         // 1xx Informational
@@ -141,10 +135,8 @@ class Response
     public function body($body)
     {
         if(!($body instanceof HttpResponseInterface) &&
-           !is_null($body) &&
-           !is_string($body) &&
-           !is_numeric($body) &&
-           !is_callable(array($body, '__toString')))
+           !($body instanceof \Closure) &&
+           (is_object($body) && !is_callable($body, '__toString')))
         {
             throw new \UnexpectedValueException(sprintf("Invalid body type %s", gettype($body)));
         }
@@ -183,6 +175,20 @@ class Response
         }
         
         return $this;
+    }
+    
+    /**
+     * Sets the content type
+     *
+     * @param   string  $contentType    Content type
+     * @param   string  $charset        (optional) Charset
+     * 
+     * @return \Opis\Http\Response
+     */
+    
+    public function type($contentType, $charset = null)
+    {
+        return $this->contentType($contentType, $charset);
     }
     
     /**
@@ -336,7 +342,7 @@ class Response
         
         $contentType = $this->contentType;
         
-        if(stripos($contentType, 'text/') === 0 || in_array($contentType, array('application/json', 'application/xml')))
+        if(stripos($contentType, 'text/') === 0 || in_array($contentType, array('application/json', 'application/xml', 'application/xhtml+xml')))
         {
             $contentType .= '; charset=' . $this->charset;
         }
@@ -352,30 +358,6 @@ class Response
         {
             setcookie($cookie['name'], $cookie['value'], $cookie['ttl'], $cookie['path'], $cookie['domain'], $cookie['secure'], $cookie['httponly']);
         }
-    }
-        
-    /**
-     * Enables ETag response cache.
-     *
-     * @return  \Opis\Http\Response
-     */
-    
-    public function cache($value = true)
-    {
-        $this->responseCache = $value;
-        return $this;
-    }
-    
-    /**
-     * Enables output compression.
-     *
-     * @return \Opis\Http\Response
-     */
-    
-    public function compress($value = true)
-    {
-        $this->outputCompression = $value;
-        return $this;
     }
         
         
@@ -424,22 +406,20 @@ class Response
         {   
             ob_start();
             
-            $body = (string) $this->body;
             
             if(in_array($this->statusCode, array(100, 101, 102, 204, 205, 304)))
             {
                 goto FINISH;
             }
             
-            if($this->outputCompression)
+            if($this->body instanceof \Closure)
             {
-                ob_start('ob_gzhandler');
-                echo $body;
-                ob_end_flush();
+                $body = $this->body;
+                $body($this->request, $this);
             }
             else
             {
-                echo $body;
+                echo (string) $this->body;
             }
             
             if(!array_key_exists('transfer-encoding', $this->headers))

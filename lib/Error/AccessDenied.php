@@ -23,9 +23,9 @@ namespace Opis\Http\Error;
 class AccessDenied extends HttpError
 {
     
-    public function __construct($message = '')
+    public function __construct($message = '', array $headers = array())
     {
-        parent::__construct(403, $message);
+        parent::__construct(403, $message, $headers);
     }
     
 }

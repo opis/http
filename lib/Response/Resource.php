@@ -18,16 +18,16 @@
  * limitations under the License.
  * ============================================================================ */
 
-namespace Opis\Http\Container;
+namespace Opis\Http\Response;
 
+use Opis\Http\Mime;
 use RuntimeException;
 use Opis\Http\Request;
 use Opis\Http\Response;
-use Opis\Http\Mime;
-use Opis\Http\ResponseContainerInterface;
+use Opis\Http\HttpResponseInterface;
 
 
-class Resource implements ResponseContainerInterface
+class Resource implements HttpResponseInterface
 {
 
     /** @var string File path. */
@@ -43,28 +43,29 @@ class Resource implements ResponseContainerInterface
 
     public function __construct($file)
     {
-        if(file_exists($file) === false || is_readable($file) === false)
+        if(!file_exists($file) || !is_readable($file))
         {
-            throw new RuntimeException(vsprintf("%s(): File [ %s ] is not readable.", array(__METHOD__, $file)));
+            throw new RuntimeException(vsprintf('File %s is not readeable or not exist', array($file)));
         }
+        
         $this->filePath = $file;
     }
 
-
     /**
-     * Sends the response.
-     * 
-     * @access  public
-     * @param   \Opis\Http\Request
-     * @param   \Opis\Http\Response
+     * Handle the response
+     *
+     * @param   \Opis\Http\Request  $request    Http request
+     * @param   \Opis\Http\Response $response   Http response
      */
 
-    public function send(Request $request, Response $response)
+    public function handle(Request $request, Response $response)
     {
-        $response->type(Mime::get($this->filePath));
-        $response->header('accept-ranges', 'bytes');
+        $response->contentType(Mime::get($this->filePath));
         $response->sendHeaders();
-        $response->body(file_get_contents($this->filePath));
+        $file = $this->filePath;
+        $response->body(function($request, $response) use($file){
+            readfile($file);
+        });
         $response->send();
     }
 }
