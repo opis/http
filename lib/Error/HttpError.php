@@ -40,7 +40,7 @@ class HttpError implements HttpResponseInterface
         $this->headers = $headers;
     }
     
-    public function send(Request $request, Response $response)
+    public function handle(Request $request, Response $response)
     {
         $response->headers($this->headers);
         $response->status($this->statusCode);
