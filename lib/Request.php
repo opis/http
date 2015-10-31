@@ -350,7 +350,7 @@ class Request
         switch($this->realMethod())
         {
             case 'GET':
-                return $this->post($key, $default);
+                return $this->get($key, $default);
             case 'POST':
                 return $this->post($key, $default);
             default:
