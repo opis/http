@@ -136,7 +136,7 @@ class Response
     {
         if(!($body instanceof HttpResponseInterface) &&
            !($body instanceof \Closure) &&
-           (is_object($body) && !is_callable($body, '__toString')))
+           (is_object($body) && !method_exists($body, '__toString')))
         {
             throw new \UnexpectedValueException(sprintf("Invalid body type %s", gettype($body)));
         }
