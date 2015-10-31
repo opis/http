@@ -617,6 +617,29 @@ class Request
         return $this->schemeAndHttpHost() . $this->baseUrl() . $path;
     }
     
+    
+    public function getUrl($path, array $query = array())
+    {
+        if(!empty($query))
+        {
+            $qs = array();
+            
+            foreach($query as $key => $value)
+            {
+                $qs[] = $key . '=' . urlencode($value);
+            }
+            
+            $qs = '?' . implode('&', $qs);
+        }
+        else
+        {
+            $qs = '';
+        }
+        
+        return $this->schemeAndHttpHost() . $this->baseUrl() . $path . $qs;
+    }
+    
+    
     public function queryString()
     {
         if(!isset($this->cache['query_string']))
