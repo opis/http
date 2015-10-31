@@ -23,9 +23,19 @@ This library is available on [Packagist](https://packagist.org/packages/opis/htt
 ```json
 {
     "require": {
-        "opis/http": "1.3.*"
+        "opis/http": "^2.0.0"
     }
 }
+```
+
+If you are unable to use [Composer](http://getcomposer.org) you can download the
+[tar.gz](https://github.com/opis/http/archive/2.0.0.tar.gz) or the [zip](https://github.com/opis/http/archive/2.0.0.zip)
+archive file, extract the content of the archive and include de `autoload.php` file into your project. 
+
+```php
+
+require_once 'path/to/http-2.0.0/autoload.php';
+
 ```
 
 ### Documentation
