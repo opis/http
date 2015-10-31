@@ -1,7 +1,7 @@
 {
     "name": "opis/http",
-    "description": "Opis Http Component",
-    "keywords": ["opis", "http"],
+    "description": "An HTTP abstraction layer that eases the work with HTTP requests and responses",
+    "keywords": ["opis", "http", "request", "response", "abstraction"],
     "homepage": "http://opis.io",
     "license": "Apache-2.0",
     "authors": [
