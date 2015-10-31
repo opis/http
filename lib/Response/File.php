@@ -72,7 +72,6 @@ class File implements HttpResponseInterface
         $opt = $this->options;
         $response->contentType($opt['contentType']);
         $response->header('content-disposition', vsprintf('%s; filename="%s"', array($opt['disposition'], $opt['fileName'])));
-        $response->sendHeaders();
         $file = $this->filePath;
         $response->body(function($request, $response) use($file){
             readfile($file);

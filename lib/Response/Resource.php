@@ -61,7 +61,6 @@ class Resource implements HttpResponseInterface
     public function handle(Request $request, Response $response)
     {
         $response->contentType(Mime::get($this->filePath));
-        $response->sendHeaders();
         $file = $this->filePath;
         $response->body(function($request, $response) use($file){
             readfile($file);
