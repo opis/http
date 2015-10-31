@@ -612,6 +612,7 @@ class Request
         return $this->cache['url'];
     }
     
+    
     public function uriForPath($path)
     {
         return $this->schemeAndHttpHost() . $this->baseUrl() . $path;
