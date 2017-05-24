@@ -83,9 +83,16 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
             $server = $this->getServerParams();
             $method = strtoupper($server['REQUEST_METHOD'] ?? 'GET');
             if($method === 'POST'){
-                $body = $this->getParsedBody();
-
+                if(isset($server['HTTP_X_HTTP_METHOD_OVERRIDE'])){
+                    $method = strtoupper($server['HTTP_X_HTTP_METHOD_OVERRIDE']);
+                } elseif(null !== $body = $this->getParsedBody()){
+                    $method = strtoupper($body[$this->withAttribute('method', 'POST')]);
+                }
+                if(!in_array($method, ['PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'TRACE', 'CONNECT', 'GET'])){
+                    $method = 'POST';
+                }
             }
+            $this->method = $method;
         }
         return $this->method;
     }
@@ -104,6 +111,9 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function getUri()
     {
+        if(null === $this->uri){
+            $this->uri = new Uri($this);
+        }
         return $this->uri;
     }
 
@@ -178,7 +188,6 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
     public function getUploadedFiles()
     {
         if(null === $this->uploadedFiles){
-
         }
         return $this->uploadedFiles;
     }

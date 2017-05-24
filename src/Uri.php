@@ -17,10 +17,30 @@
 
 namespace Opis\Http;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
 
 class Uri implements UriInterface
 {
+
+    /** @var ServerRequestInterface  */
+    protected $request;
+
+    /** @var  string */
+    protected $scheme;
+
+    /** @var  string */
+    protected $authority;
+
+    /**
+     * Uri constructor.
+     * @param ServerRequestInterface $request
+     */
+    public function __construct(ServerRequestInterface $request)
+    {
+        $this->request = $request;
+    }
+
     /**
      * @inheritDoc
      */
