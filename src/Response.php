@@ -1,9 +1,6 @@
 <?php
 /* ===========================================================================
- * Opis Project
- * http://opis.io
- * ===========================================================================
- * Copyright 2013-2015 Marius Sarca
+ * Copyright 2013-2016 The Opis Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +15,34 @@
  * limitations under the License.
  * ============================================================================ */
 
-namespace Opis\Http\Error;
+namespace Opis\Http;
 
-class NotFound extends HttpError
+use Psr\Http\Message\ResponseInterface;
+
+class Response extends Message implements ResponseInterface
 {
-    
-    public function __construct($message = '', array $headers = array())
+    /**
+     * @inheritDoc
+     */
+    public function getStatusCode()
     {
-        parent::__construct(404, $message, $headers);
+        // TODO: Implement getStatusCode() method.
     }
-    
+
+    /**
+     * @inheritDoc
+     */
+    public function withStatus($code, $reasonPhrase = '')
+    {
+        // TODO: Implement withStatus() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getReasonPhrase()
+    {
+        // TODO: Implement getReasonPhrase() method.
+    }
+
 }
