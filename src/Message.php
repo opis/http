@@ -34,6 +34,13 @@ abstract class Message implements MessageInterface
     /** @var  StreamInterface */
     protected $body;
 
+    public function __construct(string $protocol = '1.1', $headers = [], StreamInterface $body = null)
+    {
+        $this->protocolVersion = $protocol;
+        $this->headers = $headers;
+        $this->body = $body;
+    }
+
     /**
      * @inheritDoc
      */
@@ -47,8 +54,9 @@ abstract class Message implements MessageInterface
      */
     public function withProtocolVersion($version)
     {
-        $this->protocolVersion = $version;
-        return $this;
+        $obj = clone $this;
+        $obj->protocolVersion = $version;
+        return $obj;
     }
 
     /**
@@ -93,15 +101,16 @@ abstract class Message implements MessageInterface
      */
     public function withHeader($name, $value)
     {
+        $obj = clone $this;
         if(!is_array($value)){
             $value[] = $value;
         }
-        $this->headers[strtolower($name)] = [
+        $obj->headers[strtolower($name)] = [
             'name' => $name,
             'value' => $value,
         ];
-        $this->cacheHeaders = null;
-        return $this;
+        $obj->cacheHeaders = null;
+        return $obj;
     }
 
     /**
@@ -109,13 +118,14 @@ abstract class Message implements MessageInterface
      */
     public function withAddedHeader($name, $value)
     {
+        $obj = clone $this;
         if(!is_array($value)){
             $value[] = $value;
         }
         $key = strtolower($name);
-        $this->headers[$key]['value'] = array_merge($this->headers[$key]['value'] ?? [], $value);
-        $this->cacheHeaders = null;
-        return $this;
+        $obj->headers[$key]['value'] = array_merge($obj->headers[$key]['value'] ?? [], $value);
+        $obj->cacheHeaders = null;
+        return $obj;
     }
 
     /**
@@ -123,9 +133,10 @@ abstract class Message implements MessageInterface
      */
     public function withoutHeader($name)
     {
-        unset($this->headers[strtolower($name)]);
-        $this->cacheHeaders = null;
-        return $this;
+        $obj = clone $this;
+        unset($obj->headers[strtolower($name)]);
+        $obj->cacheHeaders = null;
+        return $obj;
     }
 
     /**
@@ -141,7 +152,8 @@ abstract class Message implements MessageInterface
      */
     public function withBody(StreamInterface $body)
     {
-        $this->body = $body;
-        return $this->body;
+        $obj = clone $this;
+        $obj->body = $body;
+        return $obj;
     }
 }
