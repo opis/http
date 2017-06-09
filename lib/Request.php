@@ -417,6 +417,16 @@ class Request
     }
 
     /**
+     * Get headers
+     *
+     * @return array
+     */
+    public function headers()
+    {
+        return $this->request['headers'];
+    }
+
+    /**
      * Returns the value of the specified header
      *
      * @param   string  $name       Header's name
