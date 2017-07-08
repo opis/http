@@ -71,7 +71,7 @@ class Request
     
     public static function fromGlobals(ProxyHandler $proxy = null)
     {
-        $request = new Request($_GET, $_POST, $_COOKIE, $_FILES, $_SERVER, null);
+        $request = new static($_GET, $_POST, $_COOKIE, $_FILES, $_SERVER, null);
         $request->proxy = $proxy;
         return $request;
     }
@@ -184,7 +184,7 @@ class Request
         $server['REQUEST_URI'] = $components['path'].('' !== $queryString ? '?'.$queryString : '');
         $server['QUERY_STRING'] = $queryString;
         
-        return new Request($get, $post, $cookies, $files, $server, $body);
+        return new static($get, $post, $cookies, $files, $server, $body);
     }
     
     /**
