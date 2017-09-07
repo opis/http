@@ -22,10 +22,6 @@ namespace Opis\Http;
 
 class Response
 {
-  
-    /** @var \Opis\Http\Request Request instance. */
-    protected $request;
-  
     /** @var mixed Response body. */
     protected $body = '';
     
@@ -39,13 +35,13 @@ class Response
     protected $statusCode = 200;
     
     /** @var array Response headers. */
-    protected $headers = array();
+    protected $headers = [];
     
     /** @var array Cookies. */
-    protected $cookies = array();
+    protected $cookies = [];
     
     /** @var array HTTP status codes. */
-    protected $statusCodes = array(
+    protected $statusCodes = [
         // 1xx Informational
         '100' => 'Continue',
         '101' => 'Switching Protocols',
@@ -108,330 +104,273 @@ class Response
         '509' => 'Bandwidth Limit Exceeded',
         '510' => 'Not Extended',
         '530' => 'User access denied',
-    );
-      
+    ];
+
     /**
-     * Constructor.
+     * Response constructor.
      *
-     * @param   \Opis\Http\Request  $request    Request instance
-     * @param   string              $body       (optional) Response body
+     * @param mixed|null $body
      */
-    
-    public function __construct(Request $request, $body = null)
+    public function __construct($body = null)
     {
-        $this->request = $request;
-        $this->body($body);
+        $this->setBody($body);
     }
-    
-    
+
     /**
-     * Set the response body.
+     * Set the response body
      *
-     * @param   mixed   $body   Response body
-     * 
-     * @return  \Opis\Http\Response
+     * @param mixed $body
+     * @return $this
      */
-    
-    public function body($body)
+    public function setBody($body)
     {
-        if(!($body instanceof HttpResponseInterface) &&
-           !($body instanceof \Closure) &&
-           (is_object($body) && !method_exists($body, '__toString')))
-        {
+        if(!($body instanceof \Closure) &&
+           (is_object($body) && !method_exists($body, '__toString'))) {
             throw new \UnexpectedValueException(sprintf("Invalid body type %s", gettype($body)));
         }
         
         $this->body = $body;
         return $this;
     }
-    
+
     /**
-     * Returns the response body.
+     * Get the response body
      *
-     * @return  mixed
+     * @return mixed|null
      */
-    
     public function getBody()
     {
         return $this->body;
     }
-    
+
     /**
-     * Sets the content type
+     * Set the response's content type
      *
-     * @param   string  $contentType    Content type
-     * @param   string  $charset        (optional) Charset
-     * 
-     * @return \Opis\Http\Response
+     * @param string $contentType
+     * @param string|null $charset
+     * @return $this
      */
-    
-    public function contentType($contentType, $charset = null)
+    public function setContentType(string $contentType, string $charset = null)
     {
         $this->contentType = $contentType;
         
-        if($charset !== null)
-        {
+        if($charset !== null) {
             $this->charset = $charset;
         }
         
         return $this;
     }
-    
+
     /**
-     * Sets the content type
+     * Get content type
      *
-     * @param   string  $contentType    Content type
-     * @param   string  $charset        (optional) Charset
-     * 
-     * @return \Opis\Http\Response
+     * @return string
      */
-    
-    public function type($contentType, $charset = null)
+    public function getContentType(): string
     {
-        return $this->contentType($contentType, $charset);
+        return $this->contentType;
     }
-    
+
     /**
-     * Sets the charset.
+     * Set the response's charset
      *
-     * @param   string  $charset    Charset
-     * 
-     * @return  \Opis\Http\Response
+     * @param string $charset
+     * @return $this
      */
-    
-    public function charset($charset)
+    public function setCharset(string $charset)
     {
         $this->charset = $charset;
         return $this;
     }
-    
-    
+
     /**
-     * Sets the HTTP status code.
+     * Get charset
      *
-     * @param int $statusCode HTTP status code
-     * @return \Opis\Http\Response
+     * @return string
      */
-    
-    public function status($statusCode)
+    public function getCharset(): string
     {
-        if(isset($this->statusCodes[$statusCode]))
-        {
+        return $this->charset;
+    }
+
+    /**
+     * Set the status code of the response
+     *
+     * @param int $statusCode
+     * @return $this
+     */
+    public function setStatusCode(int $statusCode)
+    {
+        if(isset($this->statusCodes[$statusCode])) {
             $this->statusCode = $statusCode;
         }
         
         return $this;
     }
-    
-    
+
     /**
-     * Add a header.
+     * Get the message associated with current status code
      *
-     * @param   string  $name   Header name
-     * @param   string  $value  Header value
-     * 
-     * @return  \Opis\Http\Response
+     * @return string
      */
-    
-    public function header($name, $value)
+    public function getStatusCodeMessage(): string
+    {
+        return $this->statusCodes[$this->statusCode] ?? '';
+    }
+
+    /**
+     * Get status code
+     *
+     * @return int
+     */
+    public function getStatusCode(): int
+    {
+        return $this->statusCode;
+    }
+
+    /**
+     * Add a new header
+     *
+     * @param string $name
+     * @param string $value
+     * @return $this
+     */
+    public function addHeader(string $name, string $value)
     {
         $this->headers[strtolower($name)] = $value;
         return $this;
     }
-    
+
     /**
-     * Set multiple headers at once
+     * Get the value of a header
      *
-     * @param   array   $headers    Headers
-     * 
-     * @return  \Opis\Http\Response
+     * @param string $name
+     * @param string $default
+     * @return string
      */
-    
-    public function headers(array $headers)
+    public function getHeader(string $name, string $default = ''): string
     {
-        foreach($headers as $name => $value)
-        {
-            $this->headers[strtolower($name)] = $value;
+        return $this->headers[$name] ?? $default;
+    }
+
+    /**
+     * Check if header exists
+     *
+     * @param string $name
+     * @return bool
+     */
+    public function hasHeader(string $name): bool
+    {
+        return isset($this->headers[$name]);
+    }
+
+    /**
+     * Delete a header
+     *
+     * @param string $name
+     * @return $this
+     */
+    public function deleteHeader(string $name)
+    {
+        unset($this->headers[$name]);
+        return $this;
+    }
+
+    /**
+     * Add headers
+     *
+     * @param string[] $headers
+     * @return $this
+     */
+    public function addHeaders(array $headers)
+    {
+        foreach($headers as $name => $value) {
+            $this->addHeader($name, $value);
         }
         
         return $this;
     }
-    
-    
+
     /**
-     * Clear the headers.
+     * Get headers
      *
-     * @return  \Opis\Http\Response
+     * @param string[]|null $filter
+     * @return string[]
      */
-    
-    public function clearHeaders()
+    public function getHeaders(array $filter = null): array
     {
-        $this->headers = array();
+        if($filter === null){
+            return $this->headers;
+        }
+
+        return array_intersect_key(array_flip($filter), $this->headers);
+    }
+
+    /**
+     * Clear headers
+     *
+     * @param string[]|null $filter
+     * @return $this
+     */
+    public function clearHeaders(array $filter = null)
+    {
+        if($filter !== null){
+            $this->headers = [];
+        } else {
+            foreach ($filter as $header){
+                unset($this->headers[$header]);
+            }
+        }
         return $this;
     }
-    
+
     /**
-     * Set a cookie.
+     * Set a cookie
      *
-     * @param   string  $name       Cookie name
-     * @param   string  $value      Cookie value
-     * @param   int     $ttl        (optional) Time to live
-     * @param   array   $options    (optional) Cookie options
-     * 
-     * @return  \Opis\Http\Response
+     * @param string $name
+     * @param string $value
+     * @param int $ttl
+     * @param string[] $options
+     * @return $this
      */
-    
-    public function cookie($name, $value, $ttl = 0, array $options = array())
+    public function setCookie(string $name, string $value, int $ttl = 0, array $options = [])
     {
         $ttl = ($ttl > 0) ? (time() + $ttl) : 0;
-        $defaults = array('path' => '/', 'domain' => '', 'secure' => false, 'httponly' => false);
-        $this->cookies[] = array('name' => $name, 'value' => $value, 'ttl' => $ttl) + $options + $defaults;
+        $defaults = ['path' => '/', 'domain' => '', 'secure' => false, 'httponly' => false];
+        $this->cookies[] = ['name' => $name, 'value' => $value, 'ttl' => $ttl] + $options + $defaults;
         return $this;
     }
-    
-    
+
     /**
-     * Deletes a cookie.
+     * Delete a cookie
      *
-     * @param   string  $name       Cookie name
-     * @param   array   $options    (optional) Cookie options
-     * 
-     * @return \Opis\Http\Response
+     * @param string $name
+     * @param array $options
+     * @return Response
      */
-    
-    public function deleteCookie($name, array $options = array())
+    public function deleteCookie(string $name, array $options = [])
     {
-        return $this->cookie($name, '', time() - 3600, $options);
+        return $this->setCookie($name, '', time() - 3600, $options);
     }
-    
+
     /**
-     * Clear cookies.
+     * Get cookies
      *
-     * @return  \Opis\Http\Response
+     * @return array
      */
-    
+    public function getCookies(): array
+    {
+        return $this->cookies;
+    }
+
+    /**
+     * Clear cookies
+     *
+     * @return $this
+     */
     public function clearCookies()
     {
         $this->cookies = array();
         return $this;
-    }
-    
-    /**
-     * Sends response headers.
-     *
-     * @access public
-     */
-    
-    public function sendHeaders()
-    {
-        if(headers_sent())
-        {
-            return;
-        }
-        
-        if($this->request->server('FCGI_SERVER_VERSION', false) !== false)
-        {
-            $protocol = 'Status:';
-        }
-        else
-        {
-            $protocol = $this->request->server('SERVER_PROTOCOL', 'HTTP/1.1');
-        }
-        
-        header($protocol . ' ' . $this->statusCode . ' ' . $this->statusCodes[$this->statusCode]);
-        
-        $contentType = $this->contentType;
-        
-        if(stripos($contentType, 'text/') === 0 || in_array($contentType, array('application/json', 'application/xml', 'application/xhtml+xml')))
-        {
-            $contentType .= '; charset=' . $this->charset;
-        }
-        
-        header('Content-Type: ' . $contentType);
-        
-        foreach($this->headers as $name => $value)
-        {
-            header($name . ': ' . $value);
-        }
-        
-        foreach($this->cookies as $cookie)
-        {
-            setcookie($cookie['name'], $cookie['value'], $cookie['ttl'], $cookie['path'], $cookie['domain'], $cookie['secure'], $cookie['httponly']);
-        }
-    }
-        
-        
-    /**
-     * Redirects to another location.
-     *
-     * @param   string  $location   (optional) Location
-     * @param   int     $statusCode (optional) HTTP status code
-     */
-    
-    public function redirect($location = '', $statusCode = 302)
-    {
-        $this->status($statusCode);
-        
-        $this->header('Location', $location);
-        
-        $this->sendHeaders();
-        
-        exit();
-    }
-    
-    /**
-     * Redirects the user back to the previous page.
-     *
-     * @param   int $statusCode (optional) HTTP status code
-     */
-    
-    public function back($statusCode = 302)
-    {
-        $this->redirect($this->request->referer(), $statusCode);
-    }
-    
-    /**
-     * Send output to browser.
-     *
-     * @access public
-     */
-    
-    public function send()
-    {
-        if($this->body instanceof HttpResponseInterface)
-        {
-            $this->body->handle($this->request, $this);
-        }
-        else
-        {   
-            ob_start();
-            
-            
-            if(in_array($this->statusCode, array(100, 101, 102, 204, 205, 304)))
-            {
-                goto FINISH;
-            }
-            
-            if($this->body instanceof \Closure)
-            {
-                $body = $this->body;
-                $body($this->request, $this);
-            }
-            else
-            {
-                echo (string) $this->body;
-            }
-            
-            if(!array_key_exists('transfer-encoding', $this->headers))
-            {
-                $this->header('content-length', ob_get_length());
-            }
-            
-            FINISH:
-            
-            $this->sendHeaders();
-            
-            ob_end_flush();
-        }
     }
 }

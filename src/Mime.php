@@ -22,7 +22,7 @@ namespace Opis\Http;
 
 class Mime
 {
-    protected static $defaultMime = array(
+    protected static $defaultMime = [
         'ez' => 'application/andrew-inset',
         'aw' => 'application/applixware',
         'atom' => 'application/atom+xml',
@@ -789,45 +789,42 @@ class Mime
         'movie' => 'video/x-sgi-movie',
         'smv' => 'video/x-smv',
         'ice' => 'x-conference/x-cooltalk',
-    );
+    ];
 
 
     /**
-     * Constructor
-     *
-     * @access  protected
+     * Mime constructor
      */
-
     protected function __construct()
     {
+        // nothing here
     }
     
     /**
-     * Returns the mime type of a file. Returns false if the mime type is not found.
+     * Returns the mime type of a file.
      *
-     * @access  public
      * @param   string   $file   Full path to the file
      * @param   boolean  $guess  (optional) Set to false to disable mime type guessing
      * @return  string
      */
-    
-    public static function get($file, $guess = true)
+    public static function get(string $file, bool $guess = true): string
     {
-        if($guess === true)
-        {
+        if($guess === true) {
             $extension = pathinfo($file, PATHINFO_EXTENSION);
-            
-            if(isset(self::$defaultMime[$extension]))
-            {
+            if(isset(self::$defaultMime[$extension])) {
                 return self::$defaultMime[$extension];
             }
-            
         }
-        
+
         // Get mime using the file information functions
         $info = finfo_open(FILEINFO_MIME_TYPE);
         $mime = finfo_file($info, $file);
         finfo_close($info);
+
+        if(false === $mime){
+            $mime = 'application/octet-stream';
+        }
+
         return $mime;
     }
 }

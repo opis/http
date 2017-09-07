@@ -22,19 +22,24 @@ namespace Opis\Http;
 
 class ProxyHandler
 {
-    protected $proxies = array();
-    
-    protected $hosts  = array();
-    
-    protected $headers = array(
+    /** @var array  */
+    protected $proxies = [];
+
+    /** @var array */
+    protected $hosts  = [];
+
+    /** @var array  */
+    protected $headers = [
         'ip' => 'X_FORWARDED_FOR',
         'host' => 'X_FORWARDED_HOST',
         'proto' => 'X_FORWARDED_PROTO',
         'port' => 'X_FORWARDED_PORT',
-    );
-    
-    protected $trustedHosts = array();
-    
+    ];
+
+    /** @var array */
+    protected $trustedHosts = [];
+
+
     public function addProxy($name)
     {
         if(!is_array($name))

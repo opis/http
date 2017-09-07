@@ -26,39 +26,46 @@ class Request
     protected $proxy;
     
     /** @var    array   Cache   */  
-    protected $cache = array();
-    
-    /** @var    array   Request */
-    protected $request = array();
+    protected $cache = [];
+
+    /** @var array */
+    protected $requestQuery;
+
+    /** @var array */
+    protected $requestPost;
+
+    /** @var array */
+    protected $requestCookies;
+
+    /** @var array */
+    protected $requestFiles;
+
+    /** @var array */
+    protected $requestServer;
+
+    protected $requestBody;
+
+    protected $requestHeaders;
     
     /**
      * Constructor.
      *
-     * @param   array   $get        GET data
+     * @param   array   $query        GET data
      * @param   array   $post       POST data
      * @param   array   $cookies    Cookie data
      * @param   array   $files      File data
      * @param   array   $server     Server info
      * @param   string  $body       Request body
      */
-
-    public function __construct(array $get,
-                                array $post,
-                                array $cookies,
-                                array $files,
-                                array $server,
-                                $body = null)
+    public function __construct(array $query, array $post, array $cookies, array $files, array $server, $body = null)
     {
-        $this->request = array(
-            'get' => $get,
-            'post' => $post,
-            'cookies' => $cookies,
-            'files' => $files,
-            'server' => $server,
-            'body' => $body,
-        );
-        
-        $this->request['headers'] = $this->resolveHeaders();
+        $this->requestQuery = $query;
+        $this->requestPost = $post;
+        $this->requestCookies = $cookies;
+        $this->requestFiles = $files;
+        $this->requestServer = $server;
+        $this->requestBody = $body;
+        $this->requestHeaders = $this->resolveHeaders();
     }
     
     /**
@@ -234,30 +241,14 @@ class Request
         return implode('&', $parts);
     }
     
-    
-    public function response()
-    {
-        if(!isset($this->cache['response']))
-        {
-            $this->cache['response'] = new Response($this);
-        }
-        return $this->cache['response'];
-    }
-    
     /**
      * Returns the raw request body.
      * 
      * @return  string
      */
-
     public function body()
     {
-        if($this->request['body'] === null)
-        {
-            $this->request['body'] = file_get_contents('php://input');
-        }
-        
-        return $this->request['body'];
+        return $this->requestBody ?? ($this->requestBody = file_get_contents('php://input'));
     }
     
     /**
@@ -306,15 +297,13 @@ class Request
      * 
      * @return  mixed
      */
-
-    public function get($key = null, $default = null)
+    public function query($key = null, $default = null)
     {
-        if($key === null)
-        {
-            return $this->request['get'];
+        if($key === null) {
+            return $this->requestQuery;
         }
-        
-        return isset($this->request['get'][$key]) ? $this->request['get'][$key] : $default;
+
+        return $this->requestQuery[$key] ?? $default;
     }
 
     /**
@@ -325,15 +314,13 @@ class Request
      * 
      * @return  mixed
      */
-
     public function post($key = null, $default = null)
     {
-        if($key === null)
-        {
-            return $this->request['post'];
+        if($key === null) {
+            return $this->requestPost;
         }
-        
-        return isset($this->request['post'][$key]) ? $this->request['post'][$key] : $default;
+
+        return $this->requestPost[$key] ?? $default;
     }
     
     /**
@@ -350,7 +337,7 @@ class Request
         switch($this->realMethod())
         {
             case 'GET':
-                return $this->get($key, $default);
+                return $this->query($key, $default);
             case 'POST':
                 return $this->post($key, $default);
             default:
@@ -364,17 +351,16 @@ class Request
      * @param   string  $name       (optional) Cookie name
      * @param   mixed   $default    (optional) Default value
      * 
-     * @return  string
+     * @return  string|array
      */
 
     public function cookie($name = null, $default = null)
     {
-        if($name === null)
-        {
-            return $this->request['cookies'];
+        if($name === null) {
+            return $this->requestCookies;
         }
-        
-        return isset($this->request['cookies'][$name]) ? $this->request['cookies'][$name] : $default;
+
+        return $this->requestCookies[$name] ?? $default;
     }
     
     
@@ -389,12 +375,11 @@ class Request
 
     public function file($key = null, $default = null)
     {
-        if($key === null)
-        {
-            return $this->request['files'];
+        if($key === null) {
+            return $this->requestFiles;
         }
-        
-        return isset($this->request['files'][$key]) ? $this->request['files'][$key] : $default;
+
+        return $this->requestFiles[$key] ?? $default;
     }
 
     /**
@@ -408,12 +393,11 @@ class Request
 
     public function server($key = null, $default = null)
     {
-        if($key === null)
-        {
-            return $this->request['server'];
+        if($key === null) {
+            return $this->requestServer;
         }
-        
-        return isset($this->request['server'][$key]) ? $this->request['server'][$key] : $default;
+
+        return $this->requestServer[$key] ?? $default;
     }
 
     /**
@@ -423,7 +407,7 @@ class Request
      */
     public function headers()
     {
-        return $this->request['headers'];
+        return $this->requestHeaders;
     }
 
     /**
@@ -768,14 +752,14 @@ class Request
     }
 
     /**
-     * Returns the referer.
+     * Returns the referrer.
      *
      * @param   string  $default    (optional) Default value
      * 
      * @return  string
      */
 
-    public function referer($default = '')
+    public function referrer($default = '')
     {
         return $this->header('referer', $default);
     }
