@@ -17,5 +17,10 @@
         "psr-4": {
             "Opis\\Http\\": "src/"
         }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0.x-dev"
+        }
     }
 }
