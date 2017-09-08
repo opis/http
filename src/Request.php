@@ -726,7 +726,7 @@ class Request
             unset($this->requestServer['IIS_WasUrlRewritten']);
             unset($this->requestHeaders['X_ORIGINAL_URL']);
             $requestUri = $uri;
-        } elseif(null !== $uri = $this->header('X_REWRITE_URL') !== null) {
+        } elseif(null !== $uri = $this->header('X_REWRITE_URL')) {
             unset($this->requestHeaders['X_REWRITE_URL']);
             $requestUri = $uri;
         } elseif($this->server('IIS_WasUrlRewritten') == '1' && $this->server('UNENCODED_URL') != '') {
