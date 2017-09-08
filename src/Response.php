@@ -109,11 +109,11 @@ class Response
     /**
      * Response constructor.
      *
-     * @param mixed|null $body
+     * @param mixed|null $content
      */
-    public function __construct($body = null)
+    public function __construct($content = null)
     {
-        $this->setBody($body);
+        $this->setBody($content);
     }
 
     /**
