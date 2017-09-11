@@ -30,7 +30,7 @@ class ResponseHandler
      */
     public function __construct(Request $request)
     {
-        $this->request;
+        $this->request = $request;
     }
 
     /**
@@ -60,12 +60,9 @@ class ResponseHandler
             return;
         }
 
-        ob_start();
-        echo (string) $body;
-        $length = ob_get_length();
-        $content = ob_get_flush();
+        $content = (string) $body;
 
-        $response->addHeader('Content-Length', $length);
+        $response->addHeader('Content-Length', strlen($content));
 
         $this->sendHeaders($response);
 
