@@ -23,13 +23,21 @@ class ResponseHandler
     /** @var  Request */
     protected $request;
 
+    /** @var  int[] */
+    protected $nobody;
+
     /**
-     * ResponseGenerator constructor.
-     *
+     * ResponseHandler constructor.
      * @param Request $request
+     * @param null|int[] $nobody
      */
-    public function __construct(Request $request)
+    public function __construct(Request $request, $nobody = null)
     {
+        if($nobody === null){
+            $nobody = [100, 101, 102, 204, 205, 304];
+        }
+
+        $this->nobody = $nobody;
         $this->request = $request;
     }
 
@@ -51,6 +59,11 @@ class ResponseHandler
     public function sendResponse(Response $response)
     {
         $body = $response->getBody();
+
+        if(in_array($response->getStatusCode(), $this->nobody)){
+            $response->deleteHeader('Content-Length');
+            $body = null;
+        }
 
         if($body instanceof \Closure){
             $body($response, $this);
