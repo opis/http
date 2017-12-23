@@ -36,6 +36,9 @@ class Response
     
     /** @var array Response headers. */
     protected $headers = [];
+
+    /** @var array Header map */
+    protected $map = [];
     
     /** @var array Cookies. */
     protected $cookies = [];
@@ -237,7 +240,9 @@ class Response
      */
     public function addHeader(string $name, string $value)
     {
-        $this->headers[strtolower($name)] = $value;
+        $header = strtolower($name);
+        $this->headers[$name] = $value;
+        $this->map[$header] = $name;
         return $this;
     }
 
@@ -250,7 +255,13 @@ class Response
      */
     public function getHeader(string $name, string $default = ''): string
     {
-        return $this->headers[$name] ?? $default;
+        $header = strtolower($name);
+
+        if(isset($this->map[$header])){
+            return $this->headers[$this->map[$header]];
+        }
+
+        return $default;
     }
 
     /**
@@ -261,7 +272,7 @@ class Response
      */
     public function hasHeader(string $name): bool
     {
-        return isset($this->headers[$name]);
+        return isset($this->map[strtolower($name)]);
     }
 
     /**
@@ -272,7 +283,13 @@ class Response
      */
     public function deleteHeader(string $name)
     {
-        unset($this->headers[$name]);
+        $header = strtolower($name);
+
+        if(isset($this->map[$header])){
+            unset($this->headers[$this->map[$header]]);
+            unset($this->map[$header]);
+        }
+
         return $this;
     }
 
@@ -303,7 +320,16 @@ class Response
             return $this->headers;
         }
 
-        return array_intersect_key(array_flip($filter), $this->headers);
+        $headers = [];
+
+        foreach ($filter as $header){
+            $header = strtolower($header);
+            if(isset($this->map[$header])){
+                $headers[$this->map[$header]] = true;
+            }
+        }
+
+        return array_intersect_key($headers, $this->headers);
     }
 
     /**
@@ -315,12 +341,17 @@ class Response
     public function clearHeaders(array $filter = null)
     {
         if($filter !== null){
-            $this->headers = [];
+            $this->headers = $this->map = [];
         } else {
             foreach ($filter as $header){
-                unset($this->headers[$header]);
+                $header = strtolower($header);
+                if(isset($this->map[$header])){
+                    unset($this->headers[$this->map[$header]]);
+                    unset($this->map[$header]);
+                }
             }
         }
+
         return $this;
     }
 
