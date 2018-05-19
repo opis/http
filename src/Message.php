@@ -102,14 +102,17 @@ abstract class Message implements MessageInterface
     public function withHeader($name, $value)
     {
         $obj = clone $this;
+
         if(!is_array($value)){
-            $value[] = $value;
+            $value = (array) $value;
         }
+
         $obj->headers[strtolower($name)] = [
             'name' => $name,
             'value' => $value,
         ];
         $obj->cacheHeaders = null;
+
         return $obj;
     }
 
@@ -119,11 +122,24 @@ abstract class Message implements MessageInterface
     public function withAddedHeader($name, $value)
     {
         $obj = clone $this;
+
         if(!is_array($value)){
-            $value[] = $value;
+            $value = (array) $value;
         }
+
         $key = strtolower($name);
-        $obj->headers[$key]['value'] = array_merge($obj->headers[$key]['value'] ?? [], $value);
+
+        if (isset($this->headers[$key])) {
+            $header = $this->headers[$key];
+        } else {
+            $header = [
+                'name' => $name,
+                'value' => []
+            ];
+        }
+
+        $header['value'] = array_merge($header['value'], $value);
+        $obj->headers[$key] = $header;
         $obj->cacheHeaders = null;
         return $obj;
     }
