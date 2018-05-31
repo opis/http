@@ -1,6 +1,6 @@
 <?php
 /* ===========================================================================
- * Copyright 2013-2017 The Opis Project
+ * Copyright © 2013-2018 The Opis Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,58 @@
 
 namespace Opis\Http;
 
-use Psr\Http\Message\MessageInterface;
-use Psr\Http\Message\StreamInterface;
+use InvalidArgumentException;
+use Psr\Http\Message\{
+    MessageInterface, StreamInterface
+};
 
-abstract class Message implements MessageInterface
+class Message implements MessageInterface
 {
-    /** @var  string|null */
-    protected $protocolVersion;
+    /** @var  string */
+    protected $protocolVersion = '1.1';
 
-    /** @var array  */
+    /** @var array */
     protected $headers = [];
 
-    /** @var  array|null */
-    protected $cacheHeaders;
+    /** @var  StreamInterface|null */
+    protected $body = null;
 
-    /** @var  StreamInterface */
-    protected $body;
+    /** @var string|resource|null */
+    protected $stream = 'php://temp';
 
-    public function __construct(string $protocol = '1.1', $headers = [], StreamInterface $body = null)
+    /**
+     * @param null|string|resource|StreamInterface $body
+     * @param string[]|string[][]|null $headers
+     * @param string|null $protocolVersion
+     */
+    public function __construct($body = null, array $headers = null, string $protocolVersion = null)
     {
-        $this->protocolVersion = $protocol;
-        $this->headers = $headers;
-        $this->body = $body;
+        if ($headers) {
+            $this->headers = $this->parseHeaders($headers);
+        }
+        if ($protocolVersion) {
+            $this->protocolVersion = $protocolVersion;
+        }
+
+        if ($body === null) {
+            return;
+        }
+
+        if ($body instanceof StreamInterface) {
+            $this->body = $body;
+            $this->stream = null;
+            return;
+        }
+
+        if (is_resource($body)) {
+            $this->body = new Stream($body, 'wb+');
+            $this->stream = null;
+            return;
+        }
+
+        if (is_string($body)) {
+            $this->stream = $body;
+        }
     }
 
     /**
@@ -54,6 +84,9 @@ abstract class Message implements MessageInterface
      */
     public function withProtocolVersion($version)
     {
+        if (!is_string($version)) {
+            throw new InvalidArgumentException("Protocol version must be a string");
+        }
         $obj = clone $this;
         $obj->protocolVersion = $version;
         return $obj;
@@ -64,12 +97,11 @@ abstract class Message implements MessageInterface
      */
     public function getHeaders()
     {
-        if($this->cacheHeaders === null){
-            foreach ($this->headers as $header){
-                $this->cacheHeaders[$header['name']] = $header['value'];
-            }
+        $list = [];
+        foreach ($this->headers as $header) {
+            $list[$header['name']] = $header['value'];
         }
-        return $this->cacheHeaders;
+        return $list;
     }
 
     /**
@@ -77,6 +109,9 @@ abstract class Message implements MessageInterface
      */
     public function hasHeader($name)
     {
+        if (!is_string($name)) {
+            return false;
+        }
         return isset($this->headers[strtolower($name)]);
     }
 
@@ -85,7 +120,10 @@ abstract class Message implements MessageInterface
      */
     public function getHeader($name)
     {
-       return $this->headers[strtolower($name)]['value'] ?? [];
+        if (!is_string($name)) {
+            return [];
+        }
+        return $this->headers[strtolower($name)]['value'] ?? [];
     }
 
     /**
@@ -93,7 +131,7 @@ abstract class Message implements MessageInterface
      */
     public function getHeaderLine($name)
     {
-        return implode(',', $this->getHeader($name));
+        return implode(', ', $this->getHeader($name));
     }
 
     /**
@@ -101,17 +139,14 @@ abstract class Message implements MessageInterface
      */
     public function withHeader($name, $value)
     {
-        $obj = clone $this;
+        $this->validateHeader($name, $value);
 
-        if(!is_array($value)){
-            $value = (array) $value;
-        }
+        $obj = clone $this;
 
         $obj->headers[strtolower($name)] = [
             'name' => $name,
-            'value' => $value,
+            'value' => (array) $value,
         ];
-        $obj->cacheHeaders = null;
 
         return $obj;
     }
@@ -121,26 +156,27 @@ abstract class Message implements MessageInterface
      */
     public function withAddedHeader($name, $value)
     {
-        $obj = clone $this;
+        $this->validateHeader($name, $value);
 
-        if(!is_array($value)){
-            $value = (array) $value;
-        }
+        $obj = clone $this;
 
         $key = strtolower($name);
 
-        if (isset($this->headers[$key])) {
-            $header = $this->headers[$key];
-        } else {
-            $header = [
+        if (isset($obj->headers[$key])) {
+            if (is_string($value)) {
+                $obj->headers[$key]['value'][] = $value;
+            }
+            else {
+                $obj->headers[$key]['value'] = array_merge($obj->headers[$key]['value'], $value);
+            }
+        }
+        else {
+            $obj->headers[$key] = [
                 'name' => $name,
-                'value' => []
+                'value' => (array) $value,
             ];
         }
 
-        $header['value'] = array_merge($header['value'], $value);
-        $obj->headers[$key] = $header;
-        $obj->cacheHeaders = null;
         return $obj;
     }
 
@@ -151,7 +187,6 @@ abstract class Message implements MessageInterface
     {
         $obj = clone $this;
         unset($obj->headers[strtolower($name)]);
-        $obj->cacheHeaders = null;
         return $obj;
     }
 
@@ -160,6 +195,10 @@ abstract class Message implements MessageInterface
      */
     public function getBody()
     {
+        if ($this->body === null) {
+            $this->body = new Stream($this->stream, 'wb+');
+            $this->stream = null;
+        }
         return $this->body;
     }
 
@@ -171,5 +210,64 @@ abstract class Message implements MessageInterface
         $obj = clone $this;
         $obj->body = $body;
         return $obj;
+    }
+
+    /**
+     * @param $name
+     * @param $value
+     */
+    protected function validateHeader($name, $value)
+    {
+        if (!is_string($name)) {
+            throw new InvalidArgumentException("Header name must be a string");
+        }
+
+        if (!is_array($value)) {
+            if (!is_string($value)) {
+                throw new InvalidArgumentException("Header value must be a string or an array of strings");
+            }
+        }
+        else {
+            foreach ($value as $v) {
+                if (!is_string($v)) {
+                    throw new InvalidArgumentException("Header value must be a string or an array of strings");
+                }
+            }
+        }
+    }
+
+    /**
+     * @param array $headers
+     * @return array
+     */
+    protected function parseHeaders(array $headers): array
+    {
+        $parsed = [];
+        foreach ($headers as $name => $value) {
+            if (is_string($value)) {
+                $parsed[] = [
+                    'name' => $name,
+                    'value' => [$value]
+                ];
+                continue;
+            }
+            if (is_array($value)) {
+                $list = [];
+                foreach ($value as $v) {
+                    if (is_string($v)) {
+                        $list[] = $v;
+                    }
+                }
+                if ($list) {
+                    $parsed[] = [
+                        'name' => $name,
+                        'value' => $list,
+                    ];
+                }
+                unset($list);
+                continue;
+            }
+        }
+        return $parsed;
     }
 }

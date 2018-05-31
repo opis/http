@@ -1,6 +1,6 @@
 <?php
-/* ===========================================================================
- * Copyright 2013-2017 The Opis Project
+/* ============================================================================
+ * Copyright © 2013-2018 The Opis project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,49 +17,140 @@
 
 namespace Opis\Http;
 
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\UriInterface;
+use InvalidArgumentException;
+use Psr\Http\Message\{
+    RequestInterface, StreamInterface, UriInterface
+};
 
-class Request extends Message implements RequestInterface, ServerRequestInterface
+class Request extends Message implements RequestInterface
 {
-    /** @var array  */
-    protected $attributes = [];
+    /** @var null|string */
+    protected $requestTarget = null;
 
-    /** @var   array */
-    protected $serverParams;
+    /** @var UriInterface */
+    protected $uri = null;
 
-    /** @var  array */
-    protected $cookieParams;
+    /** @var string */
+    protected $method = null;
 
-    /** @var  array */
-    protected $queryParams;
+    /**
+     * @param string|UriInterface|null $uri
+     * @param string $method
+     * @param null|string|resource|StreamInterface $body
+     * @param string[]|string[][]|null $headers
+     * @param string|null $requestTarget
+     * @param string|null $protocolVersion
+     */
+    public function __construct(
+        $uri = null,
+        string $method = 'GET',
+        $body = null,
+        array $headers = null,
+        string $requestTarget = null,
+        string $protocolVersion = null
+    ) {
+        parent::__construct($body, $headers, $protocolVersion);
+        if (!($uri instanceof UriInterface)) {
+            $uri = new Uri($uri ?? '');
+        }
+        $this->uri = $uri;
+        $this->method = $method;
+        $this->requestTarget = $requestTarget;
 
-    /** @var  array */
-    protected $uploadedFiles;
+        // Set host from URI if not in headers
+        if (!isset($headers['host'])) {
+            $host = $this->uri->getHost();
+            if ($host !== '') {
+                $port = $this->uri->getPort();
+                if ($port !== null) {
+                    $host .= ':' . $port;
+                }
+                $this->headers[] = [
+                    'name' => 'Host',
+                    'value' => [$host]
+                ];
+            }
+        }
+    }
 
-    /** @var  mixed */
-    protected $parsedBody = false;
+    /**
+     * @inheritDoc
+     */
+    public function getMethod()
+    {
+        return $this->method;
+    }
 
-    /** @var  string|null */
-    protected $requestTarget;
+    /**
+     * @inheritDoc
+     */
+    public function withMethod($method)
+    {
+        if (!is_string($method)) {
+            throw new InvalidArgumentException("Method must be a string");
+        }
+        $request = clone $this;
+        $request->method = $method;
+        return $request;
+    }
 
-    /** @var  string */
-    protected $method;
+    /**
+     * @inheritDoc
+     */
+    public function getUri()
+    {
+        return $this->uri;
+    }
 
-    /** @var  UriInterface|null */
-    protected $uri;
+    /**
+     * @inheritDoc
+     */
+    public function withUri(UriInterface $uri, $preserveHost = false)
+    {
+        $request = clone $this;
+
+        $request->uri = $uri;
+        $host = $uri->getHost();
+
+        if ($preserveHost) {
+            if ($host !== '') {
+                $host_header = null;
+                if (isset($request->headers['host'])) {
+                    $host_header = $request->getHeaderLine('host');
+                    if ($host_header === '') {
+                        $host_header = null;
+                    }
+                }
+                if ($host_header === null) {
+                    $this->headers['host'] = [
+                        'name' => 'Host',
+                        'value' => [$host],
+                    ];
+                }
+            }
+        } elseif ($host !== '') {
+            $this->headers['host'] = [
+                'name' => 'Host',
+                'value' => [$host],
+            ];
+        }
+
+        return $request;
+    }
 
     /**
      * @inheritDoc
      */
     public function getRequestTarget()
     {
-        if($this->requestTarget === null){
-            if($this->uri === null){
-                return '/';
-            } else {
-                return $this->uri->getPath();
+        if ($this->requestTarget === null) {
+            $this->requestTarget = $this->uri->getPath();
+            $qs = $this->uri->getQuery();
+            if ($qs !== '') {
+                $this->requestTarget .= '?' . $qs;
+            }
+            if ($this->requestTarget === '') {
+                $this->requestTarget = '/';
             }
         }
         return $this->requestTarget;
@@ -70,188 +161,9 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function withRequestTarget($requestTarget)
     {
-        $this->requestTarget = $requestTarget;
-        return $this;
+        $request = clone $this;
+        $request->requestTarget = $requestTarget;
+        return $request;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function getMethod()
-    {
-        if(null === $this->method){
-            $server = $this->getServerParams();
-            $method = strtoupper($server['REQUEST_METHOD'] ?? 'GET');
-            if($method === 'POST'){
-                if(isset($server['HTTP_X_HTTP_METHOD_OVERRIDE'])){
-                    $method = strtoupper($server['HTTP_X_HTTP_METHOD_OVERRIDE']);
-                } elseif(null !== $body = $this->getParsedBody()){
-                    $method = strtoupper($body[$this->withAttribute('method', 'POST')]);
-                }
-                if(!in_array($method, ['PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'TRACE', 'CONNECT', 'GET'])){
-                    $method = 'POST';
-                }
-            }
-            $this->method = $method;
-        }
-        return $this->method;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withMethod($method)
-    {
-        $this->method = strtoupper($method);
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getUri()
-    {
-        if(null === $this->uri){
-            $this->uri = new Uri($this);
-        }
-        return $this->uri;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withUri(UriInterface $uri, $preserveHost = false)
-    {
-        $host = $uri->getHost();
-
-        if($host && (!$preserveHost || $this->getHeaderLine('Host') === '')){
-            $this->withHeader('Host', $host);
-        }
-        $this->uri = $uri;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getServerParams()
-    {
-        if(null === $this->serverParams){
-            $this->serverParams = $_SERVER;
-        }
-        return $this->serverParams;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getCookieParams()
-    {
-        if(null === $this->cookieParams){
-            $this->cookieParams = $_COOKIE;
-        }
-        return $this->cookieParams;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withCookieParams(array $cookies)
-    {
-        $this->cookieParams = $cookies;
-        return;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getQueryParams()
-    {
-        if(null === $this->queryParams){
-            $this->queryParams = $_GET;
-        }
-        return $this->queryParams;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withQueryParams(array $query)
-    {
-        $this->queryParams = $query;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getUploadedFiles()
-    {
-        if(null === $this->uploadedFiles){
-        }
-        return $this->uploadedFiles;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withUploadedFiles(array $uploadedFiles)
-    {
-        $this->uploadedFiles = $uploadedFiles;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getParsedBody()
-    {
-        if(false === $this->parsedBody){
-
-        }
-        return $this->parsedBody;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withParsedBody($data)
-    {
-        $this->parsedBody = $data;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getAttributes()
-    {
-        return $this->attributes;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getAttribute($name, $default = null)
-    {
-        return $this->attributes[$name] ?? $default;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withAttribute($name, $value)
-    {
-        $this->attributes[$name] = $value;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withoutAttribute($name)
-    {
-        unset($this->attributes[$name]);
-        return $this;
-    }
 }
