@@ -66,7 +66,7 @@ class ServerRequest extends Request implements ServerRequestInterface
         $body = 'php://input',
         array $headers = [],
         array $cookies = [],
-        array $query = [],
+        array $query = null,
         $parsedBody = null,
         string $requestTarget = null,
         string $protocolVersion = null
@@ -237,38 +237,78 @@ class ServerRequest extends Request implements ServerRequestInterface
         array $files = null
     ): self {
 
-        if ($server === null) {
-            $server = $_SERVER ?? [];
-        }
+        $server = $server ?: $_SERVER;
 
-        // TODO:
-        $headers = getallheaders();
-        if ($headers === false) {
+        if (is_callable('\getallheaders')) {
+            $headers = getallheaders();
+        }
+        else {
             $headers = [];
+            foreach ($server as $key => $value) {
+                if (strpos($key, 'HTTP_') === 0) {
+                    $key = ucwords(str_replace('_', '-', strtolower(substr($key, 5))), '-');
+                    $headers[$key] = $value;
+                }
+            }
         }
-
-        foreach ($server as $key => $value) {
-
-        }
-
-        $uri = '';
 
         if ($cookies === null) {
-            $cookies = [];
+            $cookies = $_COOKIE ?? [];
+            if (!$cookies && isset($headers['Cookie'])) {
+                foreach (explode(';', $headers['Cookie']) as $cookie) {
+                    if (strpos($cookie, '=') === false) {
+                        continue;
+                    }
+                    $cookie = explode('=', $cookie, 2);
+                    $cookies[ltrim($cookie[0])] = $cookie[1];
+                }
+            }
         }
+
+        if (isset($server['HTTPS']) && $server['HTTPS'] && $server['HTTPS'] !== 'off') {
+            $uri = 'https:';
+        }
+        else {
+            if (isset($headers['X-Forwarded-Proto']) && $headers['X-Forwarded-Proto'] === 'https') {
+                $uri = 'https:';
+            }
+            else {
+                $uri = 'http:';
+            }
+        }
+
+        if (isset($server['SERVER_NAME'])) {
+            $uri .= '//' . $server['SERVER_NAME'];
+            if (isset($server['SERVER_PORT'])) {
+                $uri .= ':' . $server['SERVER_PORT'];
+            }
+        }
+
+        if (isset($server['REQUEST_URI'])) {
+            $uri .= $server['REQUEST_URI'];
+        }
+
+        $version = null;
+        if (isset($server['SERVER_PROTOCOL'])) {
+            if (preg_match('~^HTTP/(?<version>\d(?:\.\d)?)$~i', $server['SERVER_PROTOCOL'], $m)) {
+                $version = $m['version'];
+            }
+        }
+
+        $method = $server['REQUEST_METHOD'] ?? 'GET';
 
         return new self(
             $server,
             UploadedFile::parseFiles($files ?: $_FILES),
             $uri,
-            null,
+            $method,
             "php://input",
             $headers,
             $cookies,
             $query,
             $body,
             null,
-            null
+            $version
         );
     }
 }
