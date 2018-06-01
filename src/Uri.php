@@ -85,7 +85,7 @@ class Uri implements UriInterface
             unset($authority);
 
             $this->components['authority'] = $this->buildAuthority(
-                $this->components['host'],
+                $this->authority['host'],
                 $this->normalizePort($port, $this->components['scheme']),
                 $this->authority['userinfo']
             );
