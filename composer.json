@@ -1,10 +1,14 @@
 {
     "name": "opis/http",
-    "description": "An HTTP abstraction layer that eases the work with HTTP requests and responses",
-    "keywords": ["opis", "http", "request", "response", "abstraction"],
+    "description": "Simple PSR-7 HTTP Message implementation",
+    "keywords": ["opis", "http", "request", "response", "http-message", "psr-7"],
     "homepage": "http://opis.io",
     "license": "Apache-2.0",
     "authors": [
+        {
+            "name": "Sorin Sarca",
+            "email": "marius.sarca@gmail.com"
+        },
         {
             "name": "Marius Sarca",
             "email": "marius.sarca@gmail.com"
@@ -14,7 +18,13 @@
         "php": ">=7.0.0",
         "psr/http-message": "1.0.*"
     },
+    "require-dev": {
+        "phpunit/phpunit": "^6.5"
+    },
     "autoload": {
         "psr-4": {"Opis\\Http\\": "src/"}
+    },
+    "autoload-dev": {
+        "psr-4": {"Opis\\Http\\Test\\": "tests/"}
     }
 }
