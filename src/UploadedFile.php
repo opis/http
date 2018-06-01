@@ -210,7 +210,6 @@ class UploadedFile implements UploadedFileInterface
         } finally {
             if ($close) {
                 @$from->close();
-                @$to->close();
             }
         }
 
