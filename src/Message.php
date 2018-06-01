@@ -244,13 +244,15 @@ class Message implements MessageInterface
     {
         $parsed = [];
         foreach ($headers as $name => $value) {
-            if (is_string($value)) {
-                $parsed[] = [
+            $key = strtolower($name);
+            if (is_scalar($value)) {
+                $parsed[$key] = [
                     'name' => $name,
-                    'value' => [$value]
+                    'value' => [(string)$value]
                 ];
                 continue;
             }
+
             if (is_array($value)) {
                 $list = [];
                 foreach ($value as $v) {
@@ -259,7 +261,7 @@ class Message implements MessageInterface
                     }
                 }
                 if ($list) {
-                    $parsed[] = [
+                    $parsed[$key] = [
                         'name' => $name,
                         'value' => $list,
                     ];
@@ -268,6 +270,7 @@ class Message implements MessageInterface
                 continue;
             }
         }
+
         return $parsed;
     }
 }

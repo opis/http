@@ -254,7 +254,7 @@ class Uri implements UriInterface
         }
 
         $uri = clone $this;
-        $uri->components['port'] = $port;
+        $uri->authority['port'] = $port;
 
         $uri->components['authority'] = $this->buildAuthority(
             $uri->authority['host'],
