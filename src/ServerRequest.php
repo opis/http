@@ -27,7 +27,7 @@ use Psr\Http\Message\{
 
 class ServerRequest extends Request implements ServerRequestInterface
 {
-    /** @var array  */
+    /** @var array */
     protected $attributes = [];
 
     /** @var   array */
@@ -47,7 +47,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 
     /**
      * @param array $serverParams
-     * @param UploadedFileInterface[] $uploadedFiles
+     * @param UploadedFileInterface[]|UploadedFileInterface[][] $uploadedFiles
      * @param null|string|UriInterface $uri
      * @param null|string $method
      * @param string|resource|StreamInterface $body
@@ -62,7 +62,7 @@ class ServerRequest extends Request implements ServerRequestInterface
         array $serverParams = [],
         array $uploadedFiles = [],
         $uri = null,
-        $method = null,
+        string $method = null,
         $body = 'php://input',
         array $headers = [],
         array $cookies = [],
@@ -70,8 +70,7 @@ class ServerRequest extends Request implements ServerRequestInterface
         $parsedBody = null,
         string $requestTarget = null,
         string $protocolVersion = null
-    )
-    {
+    ) {
         if ($method === null) {
             $method = isset($serverParams['REQUEST_METHOD']) ? strtoupper($serverParams['REQUEST_METHOD']) : 'GET';
         }
@@ -117,12 +116,11 @@ class ServerRequest extends Request implements ServerRequestInterface
      */
     public function getQueryParams()
     {
-        if(null === $this->queryParams){
+        if (null === $this->queryParams) {
             $qs = $this->uri->getQuery();
             if ($qs === '') {
                 $this->queryParams = [];
-            }
-            else {
+            } else {
                 parse_str($qs, $this->queryParams);
                 if (!is_array($this->queryParams)) {
                     $this->queryParams = [];
@@ -221,5 +219,56 @@ class ServerRequest extends Request implements ServerRequestInterface
         $request = clone $this;
         unset($request->attributes[$name]);
         return $request;
+    }
+
+    /**
+     * @param array|null $server
+     * @param array|null $query
+     * @param array|null $body
+     * @param array|null $cookies
+     * @param array|null $files
+     * @return self
+     */
+    public static function factory(
+        array $server = null,
+        array $query = null,
+        array $body = null,
+        array $cookies = null,
+        array $files = null
+    ): self {
+
+        if ($server === null) {
+            $server = $_SERVER ?? [];
+        }
+
+        // TODO:
+        $headers = getallheaders();
+        if ($headers === false) {
+            $headers = [];
+        }
+
+        foreach ($server as $key => $value) {
+
+        }
+
+        $uri = '';
+
+        if ($cookies === null) {
+            $cookies = [];
+        }
+
+        return new self(
+            $server,
+            UploadedFile::parseFiles($files ?: $_FILES),
+            $uri,
+            null,
+            "php://input",
+            $headers,
+            $cookies,
+            $query,
+            $body,
+            null,
+            null
+        );
     }
 }
