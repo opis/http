@@ -18,7 +18,12 @@
 namespace Opis\Http;
 
 use InvalidArgumentException;
-use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\{
+    ServerRequestInterface,
+    StreamInterface,
+    UploadedFileInterface,
+    UriInterface
+};
 
 class ServerRequest extends Request implements ServerRequestInterface
 {
@@ -26,21 +31,33 @@ class ServerRequest extends Request implements ServerRequestInterface
     protected $attributes = [];
 
     /** @var   array */
-    protected $serverParams = null;
+    protected $serverParams;
 
     /** @var  array */
-    protected $cookieParams = null;
+    protected $cookieParams;
 
     /** @var  array */
-    protected $queryParams = null;
+    protected $queryParams;
 
     /** @var  array */
-    protected $uploadedFiles = null;
+    protected $uploadedFiles;
 
-    /** @var  mixed */
-    protected $parsedBody = false;
+    /** @var  array|object|null */
+    protected $parsedBody;
 
-
+    /**
+     * @param array $serverParams
+     * @param UploadedFileInterface[] $uploadedFiles
+     * @param null|string|UriInterface $uri
+     * @param null|string $method
+     * @param string|resource|StreamInterface $body
+     * @param string[]|string[][] $headers
+     * @param array $cookies
+     * @param array $query
+     * @param mixed $parsedBody
+     * @param string|null $requestTarget
+     * @param string|null $protocolVersion
+     */
     public function __construct(
         array $serverParams = [],
         array $uploadedFiles = [],
@@ -74,9 +91,6 @@ class ServerRequest extends Request implements ServerRequestInterface
      */
     public function getServerParams()
     {
-        if(null === $this->serverParams){
-            $this->serverParams = $_SERVER ?? [];
-        }
         return $this->serverParams;
     }
 
@@ -85,9 +99,6 @@ class ServerRequest extends Request implements ServerRequestInterface
      */
     public function getCookieParams()
     {
-        if(null === $this->cookieParams){
-            $this->cookieParams = $_COOKIE ?? [];
-        }
         return $this->cookieParams;
     }
 
@@ -137,9 +148,6 @@ class ServerRequest extends Request implements ServerRequestInterface
      */
     public function getUploadedFiles()
     {
-        // TODO: implement
-        if(null === $this->uploadedFiles){
-        }
         return $this->uploadedFiles;
     }
 
@@ -148,9 +156,14 @@ class ServerRequest extends Request implements ServerRequestInterface
      */
     public function withUploadedFiles(array $uploadedFiles)
     {
-        // TODO: clone
-        $this->uploadedFiles = $uploadedFiles;
-        return $this;
+        foreach ($uploadedFiles as $file) {
+            if (!($file instanceof UploadedFileInterface)) {
+                throw new InvalidArgumentException("Invalid uploaded file");
+            }
+        }
+        $request = clone $this;
+        $request->uploadedFiles = $uploadedFiles;
+        return $request;
     }
 
     /**
@@ -158,10 +171,6 @@ class ServerRequest extends Request implements ServerRequestInterface
      */
     public function getParsedBody()
     {
-        // TODO: implement
-        if(false === $this->parsedBody){
-
-        }
         return $this->parsedBody;
     }
 
