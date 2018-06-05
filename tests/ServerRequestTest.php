@@ -25,7 +25,7 @@ class ServerRequestTest extends TestCase
 
     public function testGet()
     {
-        $r = ServerRequest::factory([
+        $r = ServerRequest::fromGlobals([
             'HTTPS' => 'off',
             'REQUEST_METHOD' => 'GET',
             'SERVER_NAME' => 'example.com',
@@ -46,7 +46,7 @@ class ServerRequestTest extends TestCase
 
     public function testPost()
     {
-        $r = ServerRequest::factory([
+        $r = ServerRequest::fromGlobals([
             'HTTPS' => 'on',
             'REQUEST_METHOD' => 'GET',
             'SERVER_NAME' => 'example.com',

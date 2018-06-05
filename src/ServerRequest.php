@@ -229,7 +229,7 @@ class ServerRequest extends Request implements ServerRequestInterface
      * @param array|null $files
      * @return self
      */
-    public static function factory(
+    public static function fromGlobals(
         array $server = null,
         array $query = null,
         array $body = null,
