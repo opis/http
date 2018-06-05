@@ -1,43 +1,49 @@
 Opis Http
 =========
+[![Build Status](https://travis-ci.org/opis/http.svg?branch=3.0)](https://travis-ci.org/opis/http)
 [![Latest Stable Version](https://poser.pugx.org/opis/http/version.png)](https://packagist.org/packages/opis/http)
-[![Latest Unstable Version](https://poser.pugx.org/opis/http/v/unstable.png)](//packagist.org/packages/opis/http)
+[![Latest Unstable Version](https://poser.pugx.org/opis/http/v/unstable.png)](https://packagist.org/packages/opis/http)
 [![License](https://poser.pugx.org/opis/http/license.png)](https://packagist.org/packages/opis/http)
 
 HTTP abstraction layer
 ---------------------
-**Opis HTTP**  is a library that provides an HTTP abstraction layer that eases the work with HTTP requests and responses. 
+**Opis HTTP**  is a library that provides an 
+implementation for [PSR Http Message].
+
+### Documentation
+
+The full documentation for this library can be found [here][documentation]
 
 ### License
 
-**Opis HTTP** is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). 
+**Opis Http** is licensed under the [Apache License, Version 2.0][apache_license]. 
 
 ### Requirements
 
-* PHP 5.3.* or higher
+* PHP 7.0.* or higher
+* [PSR Http Message]
 
-### Installation
+## Installation
 
-This library is available on [Packagist](https://packagist.org/packages/opis/http) and can be installed using [Composer](http://getcomposer.org).
+**Opis Http** is available on [Packagist] and it can be installed from a 
+command line interface by using [Composer]. 
+
+```bash
+composer require opis/http
+```
+
+Or you could directly reference it into your `composer.json` file as a dependency
 
 ```json
 {
     "require": {
-        "opis/http": "^2.0.0"
+        "opis/http": "^3.0"
     }
 }
 ```
 
-If you are unable to use [Composer](http://getcomposer.org) you can download the
-[tar.gz](https://github.com/opis/http/archive/2.0.0.tar.gz) or the [zip](https://github.com/opis/http/archive/2.0.0.zip)
-archive file, extract the content of the archive and include de `autoload.php` file into your project. 
-
-```php
-
-require_once 'path/to/http-2.0.0/autoload.php';
-
-```
-
-### Documentation
-
-Examples and documentation can be found at http://opis.io/http .
+[documentation]: https://www.opis.io/http
+[apache_license]: https://www.apache.org/licenses/LICENSE-2.0 "Apache License"
+[Packagist]: https://packagist.org/packages/opis/http "Packagist"
+[Composer]: https://getcomposer.org "Composer"
+[PSR Http Message]: https://github.com/php-fig/http-message
