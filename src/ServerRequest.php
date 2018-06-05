@@ -296,6 +296,12 @@ class ServerRequest extends Request implements ServerRequestInterface
         }
 
         $method = $server['REQUEST_METHOD'] ?? 'GET';
+        if ($body === null && $method === 'POST' && isset($_POST)) {
+            $body = $_POST;
+        }
+        if ($query === null && isset($_GET)) {
+            $query = $_GET;
+        }
 
         return new self(
             $server,
