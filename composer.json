@@ -29,5 +29,10 @@
     },
     "provide": {
         "psr/http-message-implementation": "1.0"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0.x-dev"
+        }
     }
 }
