@@ -299,7 +299,7 @@ class ServerRequest extends Request implements ServerRequestInterface
         if ($body === null && $method === 'POST' && isset($_POST)) {
             $body = $_POST;
         }
-        if ($query === null && isset($_GET)) {
+        if ($query === null && $method === 'GET' && !empty($_GET)) {
             $query = $_GET;
         }
 
