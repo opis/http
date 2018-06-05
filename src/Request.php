@@ -67,7 +67,7 @@ class Request extends Message implements RequestInterface
                 }
                 $this->headers[] = [
                     'name' => 'Host',
-                    'value' => [$host]
+                    'value' => [$host],
                 ];
             }
         }
