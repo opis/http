@@ -26,5 +26,8 @@
     },
     "autoload-dev": {
         "psr-4": {"Opis\\Http\\Test\\": "tests/"}
+    },
+    "provide": {
+        "psr/http-message-implementation": "1.0"
     }
 }
