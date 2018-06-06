@@ -7,8 +7,7 @@ Opis Http
 
 HTTP abstraction layer
 ---------------------
-**Opis HTTP**  is a library that provides an 
-implementation for [PSR Http Message].
+**Opis HTTP**  is a library that provides an implementation for [PSR-7].
 
 ### Documentation
 
@@ -20,8 +19,8 @@ The full documentation for this library can be found [here][documentation]
 
 ### Requirements
 
-* PHP 7.0.* or higher
-* [PSR Http Message]
+* PHP ^7.0
+* [psr/http-message] ^1.0
 
 ## Installation
 
@@ -46,4 +45,5 @@ Or you could directly reference it into your `composer.json` file as a dependenc
 [apache_license]: https://www.apache.org/licenses/LICENSE-2.0 "Apache License"
 [Packagist]: https://packagist.org/packages/opis/http "Packagist"
 [Composer]: https://getcomposer.org "Composer"
-[PSR Http Message]: https://github.com/php-fig/http-message
+[PSR-7]: https://www.php-fig.org/psr/psr-7 "PSR-7: Http Message Interfaces"
+[psr/http-message]: https://github.com/php-fig/http-message "Http Message"
