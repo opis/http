@@ -22,7 +22,7 @@ use Psr\Http\Message\{
     RequestInterface, StreamInterface, UriInterface
 };
 
-class Request extends Message implements RequestInterface
+class Request extends Message
 {
     /** @var null|string */
     protected $requestTarget = null;

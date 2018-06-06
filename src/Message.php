@@ -22,7 +22,7 @@ use Psr\Http\Message\{
     MessageInterface, StreamInterface
 };
 
-class Message implements MessageInterface
+class Message
 {
     /** @var  string */
     protected $protocolVersion = '1.1';
@@ -46,6 +46,7 @@ class Message implements MessageInterface
         if ($headers) {
             $this->headers = $this->parseHeaders($headers);
         }
+
         if ($protocolVersion) {
             $this->protocolVersion = $protocolVersion;
         }
@@ -77,19 +78,6 @@ class Message implements MessageInterface
     public function getProtocolVersion()
     {
         return $this->protocolVersion;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withProtocolVersion($version)
-    {
-        if (!is_string($version)) {
-            throw new InvalidArgumentException("Protocol version must be a string");
-        }
-        $obj = clone $this;
-        $obj->protocolVersion = $version;
-        return $obj;
     }
 
     /**
