@@ -22,7 +22,7 @@ use Psr\Http\Message\{
     StreamInterface, UploadedFileInterface
 };
 
-class UploadedFile implements UploadedFileInterface
+class UploadedFile implements IUploadedFile
 {
     /** @var string */
     protected $name;
@@ -36,7 +36,7 @@ class UploadedFile implements UploadedFileInterface
     /** @var int|null */
     protected $size;
 
-    /** @var StreamInterface|null */
+    /** @var IStream|null */
     protected $stream = null;
 
     /** @var null|string */
@@ -90,7 +90,7 @@ class UploadedFile implements UploadedFileInterface
     /**
      * @inheritDoc
      */
-    public function getStream()
+    public function getStream(): IStream
     {
         if ($this->moved || $this->error !== UPLOAD_ERR_OK) {
             throw new RuntimeException("Stream is not available");
@@ -104,7 +104,7 @@ class UploadedFile implements UploadedFileInterface
     /**
      * @inheritDoc
      */
-    public function moveTo($targetPath)
+    public function moveTo(string $targetPath): void
     {
         if ($this->moved) {
             throw new RuntimeException("File was already moved");
@@ -160,7 +160,7 @@ class UploadedFile implements UploadedFileInterface
     /**
      * @inheritDoc
      */
-    public function getSize()
+    public function getSize(): ?int
     {
         return $this->size;
     }
@@ -168,7 +168,7 @@ class UploadedFile implements UploadedFileInterface
     /**
      * @inheritDoc
      */
-    public function getError()
+    public function getError():  int
     {
         return $this->error;
     }
@@ -176,7 +176,7 @@ class UploadedFile implements UploadedFileInterface
     /**
      * @inheritDoc
      */
-    public function getClientFilename()
+    public function getClientFilename(): ?string
     {
         return $this->name;
     }
@@ -184,18 +184,18 @@ class UploadedFile implements UploadedFileInterface
     /**
      * @inheritDoc
      */
-    public function getClientMediaType()
+    public function getClientMediaType(): ?string
     {
         return $this->type;
     }
 
     /**
-     * @param StreamInterface $from
-     * @param StreamInterface $to
+     * @param IStream $from
+     * @param IStream $to
      * @param bool $close
      * @return bool
      */
-    protected function copyContents(StreamInterface $from, StreamInterface $to, bool $close = true): bool
+    protected function copyContents(IStream $from, IStream $to, bool $close = true): bool
     {
         if (!$from->isReadable() || !$to->isWritable()) {
             return false;

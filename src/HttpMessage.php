@@ -17,9 +17,9 @@
 
 namespace Opis\Http;
 
-abstract class HttpMessage
+abstract class HttpMessage implements IHttpMessage
 {
-    /** @var Stream|null */
+    /** @var IStream|null */
     protected $body;
 
     /** @var string */
@@ -31,26 +31,27 @@ abstract class HttpMessage
     /** @var array */
     protected $headers;
 
+    /** @var bool */
+    protected $locked = true;
+
     /**
-     * @param Stream|null $body
+     * @param null|IStream $body
      * @param array $headers
      * @param string $protocolVersion
      */
-    public function __construct(Stream $body = null, array $headers = [], string $protocolVersion = 'HTTP/1.1')
+    public function __construct(?IStream $body, array $headers, string $protocolVersion)
     {
-        $raw_headers = [];
+        $formatted_headers = [];
         $map = [];
-
         foreach ($headers as $name => $value) {
             if (!is_scalar($value) || !is_string($name)) {
                 continue;
             }
-            $raw_headers[$name] = (string) $value;
+            $formatted_headers[$name] = (string) $value;
             $map[strtolower($name)] = $name;
         }
-
         $this->body = $body;
-        $this->headers = $raw_headers;
+        $this->headers = $formatted_headers;
         $this->header_map = $map;
         $this->protocolVersion = $protocolVersion;
     }
@@ -64,15 +65,15 @@ abstract class HttpMessage
     }
 
     /**
-     * @return null|Stream
+     * @inheritdoc
      */
-    public function getBody()
+    public function getBody(): ?IStream
     {
         return $this->body;
     }
 
     /**
-     * @return array
+     * @inheritdoc
      */
     public function getHeaders(): array
     {
@@ -80,8 +81,7 @@ abstract class HttpMessage
     }
 
     /**
-     * @param string $name
-     * @return bool
+     * @inheritdoc
      */
     public function hasHeader(string $name): bool
     {
@@ -89,12 +89,115 @@ abstract class HttpMessage
     }
 
     /**
-     * @param string $name
-     * @return string|null
+     * @inheritdoc
      */
-    public function getHeader(string $name)
+    public function getHeader(string $name): ?string
     {
         $name = $this->header_map[strtolower($name)] ?? false;
         return $name === false ? null : $this->headers[$name];
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function modify(callable $callback): IHttpMessage
+    {
+        $new = clone $this;
+        $new->locked = false;
+        $callback($new);
+        $new->locked = true;
+        return $new;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withProtocolVersion(string $version): IHttpMessage
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        $this->protocolVersion = $version;
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withHeader(string $name, string $value): IHttpMessage
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        $this->headers[$name] = $value;
+        $this->header_map[strtolower($name)] = $value;
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withHeaders(array $headers): IHttpMessage
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        $formatted_list = [];
+        $map = [];
+        foreach ($headers as $name => $value) {
+            if (!is_scalar($value) || !is_string($name)) {
+                continue;
+            }
+            $formatted_list[$name] = (string) $value;
+            $map[strtolower($name)] = $name;
+        }
+        $this->headers = $formatted_list;
+        $this->header_map = $map;
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withoutHeader(string $name): IHttpMessage
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        unset($this->headers[$name], $this->header_map[strtolower($name)]);
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withoutHeaders(string ...$names): IHttpMessage
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        foreach ($names as $name) {
+            unset($this->headers[$name], $this->header_map[strtolower($name)]);
+        }
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withBody(?IStream $body): IHttpMessage
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        $this->body = $body;
+        return $this;
     }
 }

@@ -23,13 +23,31 @@ class RequestInfo
     /** @var array */
     private $server, $query, $post, $cookies, $files;
 
-    public function __construct(array $server = [], array $query = [], array $post = [], array $cookies = [], array $files = [])
+    public function __construct(string $requestTarget, string $method = 'GET', array $server = [], array $query = [], array $post = [], array $cookies = [], array $files = [])
     {
-        $this->server = $server ?? $_SERVER;
-        $this->query = $query ?? $_GET;
-        $this->post = $post ?? $_POST;
-        $this->cookies = $cookies ?? $_COOKIE;
-        $this->files = UploadedFile::parseFiles($files ?? $_FILES);
+        $server = array_replace([
+            'SERVER_NAME' => 'localhost',
+            'SERVER_PORT' => 80,
+            'HTTP_HOST' => 'localhost',
+            'HTTP_USER_AGENT' => 'Opis Http 3.x',
+            'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'HTTP_ACCEPT_LANGUAGE' => 'en-us,en;q=0.5',
+            'HTTP_ACCEPT_CHARSET' => 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
+            'REMOTE_ADDR' => '127.0.0.1',
+            'SCRIPT_NAME' => '',
+            'SCRIPT_FILENAME' => '',
+            'SERVER_PROTOCOL' => 'HTTP/1.1',
+            'REQUEST_TIME' => time(),
+        ], $server);
+
+        $server['PATH_INFO'] = '';
+        $server['REQUEST_METHOD'] = strtoupper($method);
+
+        $uri = new Uri($requestTarget);
+
+        if (!empty($uri_host)) {
+            $server['SERVER_NAME'] = $server['HOST'] = $uri_host;
+        }
     }
 
     public function getServerParams(): array

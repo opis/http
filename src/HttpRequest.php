@@ -18,9 +18,9 @@
 namespace Opis\Http;
 
 
-class HttpRequest extends HttpMessage
+class HttpRequest extends HttpMessage implements IHttpRequest
 {
-    /** @var Uri */
+    /** @var IUri */
     protected $uri;
 
     /** @var string */
@@ -29,34 +29,44 @@ class HttpRequest extends HttpMessage
     /** @var string */
     protected $requestTarget;
 
-    /**
-     * HttpRequest constructor.
-     * @param RequestInfo|null $requestInfo
-     * @param string|null $requestTarget
-     * @param string|null $method
-     * @param Stream|null $body
-     * @param array|null $headers
-     * @param string|null $protocolVersion
-     */
+    /** @var array */
+    protected $cookies;
+
+    /** @var array */
+    protected $files;
+
+    /** @var array */
+    protected $query;
+
+    /** @var array */
+    protected $parsedBody;
+
     public function __construct(
-        RequestInfo $requestInfo = null,
-        string $requestTarget = null,
-        string $method = null,
-        Stream $body = null,
-        array $headers = null,
-        string $protocolVersion = null
+        IUri $uri = null,
+        string $requestTarget = '/',
+        string $method = 'GET',
+        array $cookies = [],
+        array $files = [],
+        array $query = [],
+        array $parsedBody = [],
+        ?IStream $body = null,
+        array $headers = [],
+        string $protocolVersion = 'HTTP/1.1'
     ) {
-
-        $this->method = $method;
+        $this->uri = $uri; // build it
         $this->requestTarget = $requestTarget;
-
+        $this->method = $method;
+        $this->cookies = $cookies;
+        $this->files = $files;
+        $this->query = $query;
+        $this->parsedBody = $parsedBody;
         parent::__construct($body, $headers, $protocolVersion);
     }
 
     /**
-     * @return Uri
+     * @inheritdoc
      */
-    public function getUri(): Uri
+    public function getUri(): IUri
     {
         return $this->uri;
     }
@@ -75,5 +85,144 @@ class HttpRequest extends HttpMessage
     public function getMethod(): string
     {
         return $this->method;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasCookie(string $name): bool
+    {
+        return isset($this->cookies[$name]);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getCookie(string $name)
+    {
+        return $this->cookies[$name] ?? null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getCookies(): array
+    {
+        return $this->cookies;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getUploadedFiles(): array
+    {
+        return $this->files;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getQuery(): array
+    {
+        return $this->query;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getParsedBody(): array
+    {
+        return $this->parsedBody;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withMethod(string $method): IHttpRequest
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        $this->method = $method;
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withRequestTarget(string $uri): IHttpRequest
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        $this->requestTarget = $uri;
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withUri(IUri $uri): IHttpRequest
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        $this->uri = $uri;
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withCookies(array $cookies): IHttpRequest
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        $this->cookies = $cookies;
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withUploadedFiles(array $files): IHttpRequest
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        $this->files = $files;
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withQuery(array $query): IHttpRequest
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        $this->query = $query;
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     * @return $this
+     */
+    public function withParsedBody(array $body): IHttpRequest
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+        $this->parsedBody = $body;
+        return $this;
     }
 }

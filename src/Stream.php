@@ -19,9 +19,8 @@ namespace Opis\Http;
 
 use RuntimeException,
     InvalidArgumentException;
-use Psr\Http\Message\StreamInterface;
 
-class Stream implements StreamInterface
+class Stream implements IStream
 {
     /** @var null|resource */
     protected $resource = null;
@@ -30,7 +29,7 @@ class Stream implements StreamInterface
      * @param resource|string $stream
      * @param string $mode
      */
-    public function __construct($stream, string $mode = 'r')
+    public function __construct($stream, string $mode = 'rw')
     {
         if (is_string($stream)) {
             $resource = @fopen($stream, $mode);
@@ -53,7 +52,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function close()
+    public function close(): void
     {
         if ($res = $this->detach()) {
             fclose($res);
@@ -73,7 +72,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function getSize()
+    public function getSize(): ?int
     {
         if (!$this->resource) {
             return null;
@@ -84,7 +83,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function tell()
+    public function tell(): int
     {
         if (!$this->resource) {
             throw new RuntimeException("No resource available");
@@ -101,7 +100,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function eof()
+    public function eof(): bool
     {
         return !$this->resource || feof($this->resource);
     }
@@ -109,7 +108,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function isSeekable()
+    public function isSeekable(): bool
     {
         return $this->resource ? stream_get_meta_data($this->resource)['seekable'] : false;
     }
@@ -117,7 +116,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function seek($offset, $whence = SEEK_SET)
+    public function seek(int $offset, int $whence = SEEK_SET): void
     {
         if (!$this->resource) {
             throw new RuntimeException('No resource available');
@@ -131,7 +130,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->seek(0);
     }
@@ -139,7 +138,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function isWritable()
+    public function isWritable(): bool
     {
         $mode = $this->getMetadata('mode');
 
@@ -166,7 +165,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function write($string)
+    public function write(string $string): int
     {
         if (!$this->resource) {
             throw new RuntimeException("No resource available");
@@ -184,7 +183,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function isReadable()
+    public function isReadable(): bool
     {
         $mode = $this->getMetadata('mode');
 
@@ -206,7 +205,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function read($length)
+    public function read(int $length): string
     {
         if (!$this->resource) {
             throw new RuntimeException("No resource available");
@@ -224,7 +223,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function getContents()
+    public function getContents(): string
     {
         $result = stream_get_contents($this->resource);
 
@@ -238,7 +237,7 @@ class Stream implements StreamInterface
     /**
      * @inheritDoc
      */
-    public function getMetadata($key = null)
+    public function getMetadata(string $key = null)
     {
         if (!$this->resource) {
             return null;

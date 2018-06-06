@@ -18,9 +18,8 @@
 namespace Opis\Http;
 
 use InvalidArgumentException;
-use Psr\Http\Message\UriInterface;
 
-class Uri implements UriInterface
+class Uri implements IUri
 {
     const URI_REGEX = '`^(?:(?P<scheme>[^:/?#]+):)?(?://(?P<authority>[^/?#]*))?(?P<path>[^?#]*)(?:\?(?P<query>[^#]*))?(?:#(?P<fragment>.*))?`';
 
@@ -31,11 +30,11 @@ class Uri implements UriInterface
         'https' => 443,
     ];
 
-    /** @var  string[]|null */
-    protected $authority;
-
     /** @var string[] */
     protected $components;
+
+    /** @var bool */
+    protected $locked = true;
 
     /**
      * Uri constructor.
@@ -48,22 +47,21 @@ class Uri implements UriInterface
         }
 
         $this->components = [
-            'scheme' => $m['scheme'] ?? '',
-            'authority' => $m['authority'] ?? '',
+            'scheme' => $m['scheme'] ?? null,
+            'authority' => $m['authority'] ?? null,
             'path' => $m['path'] ?? '',
-            'query' => $m['query'] ?? '',
-            'fragment' => $m['fragment'] ?? '',
+            'query' => $m['query'] ?? null,
+            'fragment' => $m['fragment'] ?? null,
         ];
         unset($m);
 
-        if ($this->components['authority'] === '') {
-            $this->authority = [
-                'userinfo' => '',
-                'host' => '',
+        if ($this->components['authority'] === null) {
+            $this->components += [
+                'userinfo' => null,
+                'host' => null,
                 'port' => null,
             ];
-        }
-        else {
+        } else {
             if (!preg_match(self::AUTHORITY_REGEX, $this->components['authority'],$authority)) {
                 throw new InvalidArgumentException("Invalid URI authority");
             }
@@ -76,26 +74,20 @@ class Uri implements UriInterface
                 }
             }
 
-            $this->authority = [
-                'userinfo' => $authority['userinfo'] ?? '',
-                'host' => $authority['host'] ?? '',
+            $this->components += [
+                'userinfo' => $authority['userinfo'] ?? null,
+                'host' => $authority['host'] ?? null,
                 'port' => $port,
             ];
 
             unset($authority);
-
-            $this->components['authority'] = $this->buildAuthority(
-                $this->authority['host'],
-                $this->normalizePort($port, $this->components['scheme']),
-                $this->authority['userinfo']
-            );
         }
     }
 
     /**
      * @inheritDoc
      */
-    public function getScheme()
+    public function getScheme(): ?string
     {
         return $this->components['scheme'];
     }
@@ -103,7 +95,7 @@ class Uri implements UriInterface
     /**
      * @inheritDoc
      */
-    public function getAuthority()
+    public function getAuthority(): ?string
     {
         return $this->components['authority'];
     }
@@ -111,31 +103,31 @@ class Uri implements UriInterface
     /**
      * @inheritDoc
      */
-    public function getUserInfo()
+    public function getUserInfo(): ?string
     {
-        return $this->authority['userinfo'];
+        return $this->components['userinfo'];
     }
 
     /**
      * @inheritDoc
      */
-    public function getHost()
+    public function getHost(): ?string
     {
-        return $this->authority['host'];
+        return $this->components['host'];
     }
 
     /**
      * @inheritDoc
      */
-    public function getPort()
+    public function getPort(): ?int
     {
-        return $this->normalizePort($this->authority['port'], $this->components['scheme']);
+        return $this->normalizePort($this->components['port'], $this->components['scheme']);
     }
 
     /**
      * @inheritDoc
      */
-    public function getPath()
+    public function getPath(): string
     {
         return $this->components['path'];
     }
@@ -143,7 +135,7 @@ class Uri implements UriInterface
     /**
      * @inheritDoc
      */
-    public function getQuery()
+    public function getQuery(): ?string
     {
         return $this->components['query'];
     }
@@ -151,7 +143,7 @@ class Uri implements UriInterface
     /**
      * @inheritDoc
      */
-    public function getFragment()
+    public function getFragment(): ?string
     {
         return $this->components['fragment'];
     }
@@ -159,71 +151,90 @@ class Uri implements UriInterface
     /**
      * @inheritDoc
      */
-    public function withScheme($scheme)
+    public function getComponents(): array
     {
-        if (!is_string($scheme)) {
-            throw new InvalidArgumentException("Scheme must be a string");
-        }
-
-        $uri = clone $this;
-        $scheme = strtolower($scheme);
-        $uri->components['scheme'] = $scheme;
-        $uri->components['authority'] = $this->buildAuthority(
-            $uri->authority['host'],
-            $uri->normalizePort($uri->authority['port'], $scheme),
-            $uri->authority['userinfo']
-        );
-        return $uri;
+        return $this->components;
     }
 
     /**
      * @inheritDoc
      */
-    public function withUserInfo($user, $password = null)
+    public function modify(callable $callback): IUri
     {
-        if (!is_string($user)) {
-            throw new InvalidArgumentException("User must be a string");
+        $new = clone $this;
+        $new->locked = false;
+        $callback($new);
+        $new->locked = true;
+        return $new;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function withScheme(string $scheme): IUri
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+
+        $scheme = strtolower($scheme);
+        $this->components['scheme'] = $scheme;
+        $this->components['authority'] = $this->buildAuthority(
+            $this->components['host'],
+            $this->normalizePort($this->components['port'], $scheme),
+            $this->components['userinfo']
+        );
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function withUserInfo(string $user, string $password = null): IUri
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
         }
 
         $userInfo = '';
         if ($user !== '') {
             $userInfo = $user;
             if ($password !== null && $password !== '') {
-                if (!is_string($password)) {
-                    throw new InvalidArgumentException("Password must be a string");
-                }
                 $userInfo .= ':' . $password;
             }
         }
 
-        $uri = clone $this;
-        $uri->authority['userinfo'] = $userInfo;
+        $this->components['userinfo'] = $userInfo;
 
-        $uri->components['authority'] = $uri->buildAuthority(
-            $uri->authority['host'],
-            $uri->normalizePort($uri->authority['port'], $uri->components['scheme']),
+        $this->components['authority'] = $this->buildAuthority(
+            $this->components['host'],
+            $this->normalizePort($this->components['port'], $this->components['scheme']),
             $userInfo
         );
 
-        return $uri;
+        return $this;
     }
 
     /**
      * @inheritDoc
      */
-    public function withHost($host)
+    public function withHost(string $host): IUri
     {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+
         if (!is_string($host)) {
             throw new InvalidArgumentException("Host must be a string");
         }
 
         $uri = clone $this;
-        $uri->authority['host'] = $host;
+        $uri->components['host'] = $host;
 
         $uri->components['authority'] = $uri->buildAuthority(
             $host,
-            $this->normalizePort($uri->authority['port'], $uri->components['scheme']),
-            $uri->authority['userinfo']
+            $this->normalizePort($uri->components['port'], $uri->components['scheme']),
+            $uri->components['userinfo']
         );
 
         return $uri;
@@ -232,79 +243,74 @@ class Uri implements UriInterface
     /**
      * @inheritDoc
      */
-    public function withPort($port)
+    public function withPort(?int $port): IUri
     {
-        if ($port === null) {
-            $uri = clone $this;
-            $uri->components['port'] = $port;
-            $uri->components['authority'] = $this->buildAuthority(
-                $uri->authority['host'],
-                $port,
-                $uri->authority['userinfo']
-            );
-            return $uri;
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
         }
 
-        if (!is_int($port)) {
-            throw new InvalidArgumentException("Port must be an integer");
+        if ($port === null) {
+            $this->components['port'] = $port;
+            $this->components['authority'] = $this->buildAuthority(
+                $this->components['host'],
+                $port,
+                $this->components['userinfo']
+            );
+            return $this;
         }
 
         if ($port < 0 || $port > 65535) {
             throw new InvalidArgumentException("Port outside of range 0-65535");
         }
 
-        $uri = clone $this;
-        $uri->authority['port'] = $port;
+        $this->components['port'] = $port;
 
-        $uri->components['authority'] = $this->buildAuthority(
-            $uri->authority['host'],
-            $uri->normalizePort($port, $uri->components['scheme']),
-            $uri->authority['userinfo']
+        $this->components['authority'] = $this->buildAuthority(
+            $this->components['host'],
+            $this->normalizePort($port, $this->components['scheme']),
+            $this->components['userinfo']
         );
 
-        return $uri;
+        return $this;
     }
 
     /**
      * @inheritDoc
      */
-    public function withPath($path)
+    public function withPath(string $path): IUri
     {
-        if (!is_string($path)) {
-            throw new InvalidArgumentException("Path must be a string");
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
         }
 
-        $uri = clone $this;
-        $uri->components['path'] = $path;
-        return $uri;
+        $this->components['path'] = $path;
+        return $this;
     }
 
     /**
      * @inheritDoc
      */
-    public function withQuery($query)
+    public function withQuery(string $query): IUri
     {
-        if (!is_string($query)) {
-            throw new InvalidArgumentException("Query must be a string");
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
         }
 
-        $uri = clone $this;
-        $uri->components['query'] = $query;
-        return $uri;
+        $this->components['query'] = $query;
+        return $this;
     }
 
     /**
      * @inheritDoc
      */
-    public function withFragment($fragment)
+    public function withFragment(string $fragment): IUri
     {
-        if (!is_string($fragment)) {
-            throw new InvalidArgumentException("Fragment must be a string");
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
         }
 
-        $uri = clone $this;
-        $uri->components['fragment'] = $fragment;
-        return $uri;
+        $this->components['fragment'] = $fragment;
+        return $this;
     }
 
     /**
