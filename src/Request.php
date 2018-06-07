@@ -53,9 +53,11 @@ class Request
     protected $body;
 
     /**
+     * Request constructor.
      * @param string $method
      * @param string $requestTarget
      * @param string $protocolVersion
+     * @param bool $secure
      * @param array $headers
      * @param array $files
      * @param null|IStream $body
@@ -64,16 +66,16 @@ class Request
      * @param array|null $formData
      */
     public function __construct(
-        string $method,
-        string $requestTarget,
-        string $protocolVersion,
-        bool $secure,
-        array $headers,
-        array $files,
-        ?IStream $body,
-        ?array $cookies,
-        ?array $query,
-        ?array $formData
+        string $method = 'GET',
+        string $requestTarget = '/',
+        string $protocolVersion = 'HTTP/1.1',
+        bool $secure = false,
+        array $headers = [],
+        array $files = [],
+        ?IStream $body = null,
+        ?array $cookies = null,
+        ?array $query = null,
+        ?array $formData = null
     ) {
 
         foreach ($headers as $name => $value) {
