@@ -17,8 +17,12 @@
 
 namespace Opis\Http;
 
+use Opis\Http\Traits\HeadersTrait;
+
 class Response
 {
+    use HeadersTrait;
+
     /** @var array */
     protected $cookies = [];
 
@@ -27,9 +31,6 @@ class Response
 
     /** @var int */
     protected $statusCode;
-
-    /** @var array */
-    protected $headers = [];
 
     /** @var null|IStream */
     protected $body;
@@ -122,14 +123,7 @@ class Response
         $this->protocolVersion = $protocolVersion;
         $this->statusCode = $statusCode;
         $this->body = $body;
-
-        foreach ($headers as $name => $value) {
-            if (!is_scalar($value) || !is_string($name)) {
-                continue;
-            }
-            $name = $this->formatHeader($name);
-            $this->headers[$name] = trim($value);
-        }
+        $this->fillHeaders($headers);
     }
 
     /**
@@ -198,23 +192,6 @@ class Response
     }
 
     /**
-     * @return array
-     */
-    public function getHeaders(): array
-    {
-        return $this->headers;
-    }
-
-    /**
-     * @param string $name
-     * @return bool
-     */
-    public function hasHeader(string $name): bool
-    {
-        return isset($this->headers[$this->formatHeader($name)]);
-    }
-
-    /**
      * @param string $name
      * @param string $value
      * @return Response
@@ -228,15 +205,6 @@ class Response
         $this->headers[$this->formatHeader($name)] = trim($value);
 
         return $this;
-    }
-
-    /**
-     * @param string $name
-     * @return null|string
-     */
-    public function getHeader(string $name): ?string
-    {
-        return $this->headers[$this->formatHeader($name)] ?? null;
     }
 
     /**
@@ -345,14 +313,5 @@ class Response
 
         $this->cookies = [];
         return $this;
-    }
-
-    /**
-     * @param string $header
-     * @return string
-     */
-    private function formatHeader(string $header): string
-    {
-        return ucwords(strtolower(trim($header)), '-');
     }
 }

@@ -17,8 +17,12 @@
 
 namespace Opis\Http;
 
+use Opis\Http\Traits\HeadersTrait;
+
 class Request
 {
+    use HeadersTrait;
+
     /** @var string */
     protected $method;
 
@@ -30,9 +34,6 @@ class Request
 
     /** @var bool */
     protected $secure;
-
-    /** @var array */
-    protected $headers = [];
 
     /** @var Uri */
     protected $uri;
@@ -78,19 +79,12 @@ class Request
         ?array $formData = null
     ) {
 
-        foreach ($headers as $name => $value) {
-            if (!is_scalar($value) || !is_string($name)) {
-                continue;
-            }
-            $name = $this->formatHeader($name);
-            $this->headers[$name] = trim($value);
-        }
-
         $this->method = strtoupper($method);
         $this->requestTarget = $requestTarget;
         $this->protocolVersion = $protocolVersion;
         $this->files = UploadedFile::parseFiles($files);
         $this->secure = $secure;
+        $this->fillHeaders($headers);
 
         if (!in_array($this->method, ['POST', 'PUT', 'PATCH', 'DELETE'])) {
             $body = null;
@@ -167,32 +161,6 @@ class Request
     public function isSecure(): bool
     {
         return $this->secure;
-    }
-
-    /**
-     * @param string $name
-     * @return bool
-     */
-    public function hasHeader(string $name): bool
-    {
-        return isset($this->headers[$this->formatHeader($name)]);
-    }
-
-    /**
-     * @param string $name
-     * @return null|string
-     */
-    public function getHeader(string $name): ?string
-    {
-        return $this->headers[$this->formatHeader($name)] ?? null;
-    }
-
-    /**
-     * @return array
-     */
-    public function getHeaders(): array
-    {
-        return $this->headers;
     }
 
     /**
@@ -291,14 +259,5 @@ class Request
         }
 
         return $this->formData;
-    }
-
-    /**
-     * @param string $header
-     * @return string
-     */
-    private function formatHeader(string $header): string
-    {
-        return ucwords(strtolower(trim($header)), '-');
     }
 }
