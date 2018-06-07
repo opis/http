@@ -17,58 +17,99 @@
 
 namespace Opis\Http;
 
-
-class HttpRequest extends HttpMessage implements IHttpRequest
+class HttpRequest
 {
-    /** @var IUri */
-    protected $uri;
-
     /** @var string */
     protected $method;
 
     /** @var string */
     protected $requestTarget;
 
+    /** @var string */
+    protected $protocolVersion;
+
+    /** @var bool */
+    protected $secure;
+
     /** @var array */
+    protected $headers = [];
+
+    /** @var Uri */
+    protected $uri;
+
+    /** @var array|null */
     protected $cookies;
 
     /** @var array */
     protected $files;
 
-    /** @var array */
+    /** @var array|null */
     protected $query;
 
-    /** @var array */
-    protected $parsedBody;
+    /** @var array|null */
+    protected $formData;
 
+    /** @var null|IStream|Stream */
+    protected $body;
+
+    /**
+     * @param string $method
+     * @param string $requestTarget
+     * @param string $protocolVersion
+     * @param array $headers
+     * @param array $files
+     * @param null|IStream $body
+     * @param array|null $cookies
+     * @param array|null $query
+     * @param array|null $formData
+     */
     public function __construct(
-        IUri $uri = null,
-        string $requestTarget = '/',
-        string $method = 'GET',
-        array $cookies = [],
-        array $files = [],
-        array $query = [],
-        array $parsedBody = [],
-        ?IStream $body = null,
-        array $headers = [],
-        string $protocolVersion = 'HTTP/1.1'
+        string $method,
+        string $requestTarget,
+        string $protocolVersion,
+        bool $secure,
+        array $headers,
+        array $files,
+        ?IStream $body,
+        ?array $cookies,
+        ?array $query,
+        ?array $formData
     ) {
-        $this->uri = $uri; // build it
+
+        foreach ($headers as $name => $value) {
+            if (!is_scalar($value) || !is_string($name)) {
+                continue;
+            }
+            $name = $this->formatHeader($name);
+            $this->headers[$name] = trim($value);
+        }
+
+        $this->method = strtoupper($method);
         $this->requestTarget = $requestTarget;
-        $this->method = $method;
+        $this->protocolVersion = $protocolVersion;
+        $this->files = UploadedFile::parseFiles($files);
+        $this->secure = $secure;
+
+        if (!in_array($this->method, ['POST', 'PUT', 'PATCH', 'DELETE'])) {
+            $body = null;
+        } else {
+            if ($body === null) {
+                $body = new Stream('php://input', 'r');
+            }
+        }
+
+        $this->body = $body;
         $this->cookies = $cookies;
-        $this->files = $files;
         $this->query = $query;
-        $this->parsedBody = $parsedBody;
-        parent::__construct($body, $headers, $protocolVersion);
+        $this->formData = $formData;
     }
 
     /**
-     * @inheritdoc
+     * @return string
      */
-    public function getUri(): IUri
+    public function getMethod(): string
     {
-        return $this->uri;
+        return $this->method;
     }
 
     /**
@@ -82,37 +123,133 @@ class HttpRequest extends HttpMessage implements IHttpRequest
     /**
      * @return string
      */
-    public function getMethod(): string
+    public function getProtocolVersion(): string
     {
-        return $this->method;
+        return $this->protocolVersion;
     }
 
     /**
-     * @inheritDoc
+     * @return Uri
+     */
+    public function getUri(): Uri
+    {
+        if ($this->uri === null) {
+            $uri = new Uri($this->requestTarget);
+
+            $components = $uri->getComponents();
+
+            if (!isset($components['host'])) {
+                if (isset($this->headers['Host'])) {
+                    $host = new Uri($this->headers['Host']);
+                    $components['host'] = $host->getHost();
+                    $components['port'] = $host->getPort();
+                }
+            }
+
+            if (isset($components['host'])) {
+                if (!isset($components['scheme'])) {
+                    $components['scheme'] = $this->secure ? 'https' : 'http';
+                }
+                $uri = new Uri($components);
+            }
+
+            $this->uri = $uri;
+        }
+
+        return $this->uri;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSecure(): bool
+    {
+        return $this->secure;
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function hasHeader(string $name): bool
+    {
+        return isset($this->headers[$this->formatHeader($name)]);
+    }
+
+    /**
+     * @param string $name
+     * @return null|string
+     */
+    public function getHeader(string $name): ?string
+    {
+        return $this->headers[$this->formatHeader($name)] ?? null;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHeaders(): array
+    {
+        return $this->headers;
+    }
+
+    /**
+     * @return null|IStream
+     */
+    public function getBody(): ?IStream
+    {
+        return $this->body;
+    }
+
+    /**
+     * @param string $name
+     * @return bool
      */
     public function hasCookie(string $name): bool
     {
-        return isset($this->cookies[$name]);
+        return isset($this->getCookies()[$name]);
     }
 
     /**
-     * @inheritDoc
+     * @param string $name
+     * @param bool $decode
+     * @return string|null
      */
-    public function getCookie(string $name)
+    public function getCookie(string $name, bool $decode = true): ?string
     {
-        return $this->cookies[$name] ?? null;
+        $cookie = $this->getCookies()[$name] ?? null;
+
+        if ($decode && $cookie !== null) {
+            return urldecode($cookie);
+        }
+
+        return $cookie;
     }
 
     /**
-     * @inheritDoc
+     * @return array
      */
     public function getCookies(): array
     {
+        if ($this->cookies === null) {
+            $result = [];
+            $cookies = explode('; ', $this->headers['Cookie']);
+            foreach ($cookies as $cookie) {
+                list($name, $value) = explode('=', $cookie, 2);
+                $name = trim($name);
+                if (empty($name)) {
+                    continue;
+                }
+                $result[$name] = trim($value, '"');
+            }
+            $this->cookies = $result;
+        }
+
         return $this->cookies;
     }
 
     /**
-     * @inheritDoc
+     * @return IUploadedFile[]
      */
     public function getUploadedFiles(): array
     {
@@ -120,109 +257,46 @@ class HttpRequest extends HttpMessage implements IHttpRequest
     }
 
     /**
-     * @inheritDoc
+     * @return array
      */
     public function getQuery(): array
     {
+        if ($this->query === null) {
+            $query = $this->getUri()->getQuery();
+            if ($query === null) {
+                $query = [];
+            } else {
+                parse_str($query, $query);
+            }
+            $this->query = $query;
+        }
+
         return $this->query;
     }
 
     /**
-     * @inheritDoc
+     * @return array
      */
-    public function getParsedBody(): array
+    public function getFormData(): array
     {
-        return $this->parsedBody;
+        if ($this->formData === null) {
+            $data = [];
+            if (isset($this->headers['Content-Type']) && 0 === strpos($this->headers['Content-Type'],
+                    'application/x-www-form-urlencoded') && $this->body !== null) {
+                parse_str((string) $this->body,$data);
+            }
+            $this->formData = $data;
+        }
+
+        return $this->formData;
     }
 
     /**
-     * @inheritDoc
-     * @return $this
+     * @param string $header
+     * @return string
      */
-    public function withMethod(string $method): IHttpRequest
+    private function formatHeader(string $header): string
     {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-        $this->method = $method;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     * @return $this
-     */
-    public function withRequestTarget(string $uri): IHttpRequest
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-        $this->requestTarget = $uri;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     * @return $this
-     */
-    public function withUri(IUri $uri): IHttpRequest
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-        $this->uri = $uri;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     * @return $this
-     */
-    public function withCookies(array $cookies): IHttpRequest
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-        $this->cookies = $cookies;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     * @return $this
-     */
-    public function withUploadedFiles(array $files): IHttpRequest
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-        $this->files = $files;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     * @return $this
-     */
-    public function withQuery(array $query): IHttpRequest
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-        $this->query = $query;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     * @return $this
-     */
-    public function withParsedBody(array $body): IHttpRequest
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-        $this->parsedBody = $body;
-        return $this;
+        return ucwords(strtolower(trim($header)), '-');
     }
 }

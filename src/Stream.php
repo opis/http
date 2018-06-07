@@ -25,6 +25,9 @@ class Stream implements IStream
     /** @var null|resource */
     protected $resource = null;
 
+    /** @var null|string */
+    protected $to_string = null;
+
     /**
      * @param resource|string $stream
      * @param string $mode
@@ -260,6 +263,10 @@ class Stream implements IStream
             return '';
         }
 
+        if ($this->to_string !== null) {
+            return $this->to_string;
+        }
+
         $current = ftell($this->resource);
         $seek = fseek($this->resource, 0) === 0;
         $contents = stream_get_contents($this->resource);
@@ -267,7 +274,9 @@ class Stream implements IStream
             fseek($this->resource, $current);
         }
 
-        return $contents === false ? '' : $contents;
+        $this->to_string = $contents === false ? '' : $contents;
+
+        return $this->to_string;
     }
 
     /**

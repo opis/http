@@ -19,7 +19,7 @@ namespace Opis\Http;
 
 use InvalidArgumentException;
 
-class Uri implements IUri
+class Uri
 {
     const URI_REGEX = '`^(?:(?P<scheme>[^:/?#]+):)?(?://(?P<authority>[^/?#]*))?(?P<path>[^?#]*)(?:\?(?P<query>[^#]*))?(?:#(?P<fragment>.*))?`';
 
@@ -33,15 +33,27 @@ class Uri implements IUri
     /** @var string[] */
     protected $components;
 
-    /** @var bool */
-    protected $locked = true;
-
     /**
      * Uri constructor.
-     * @param string $uri
+     * @param string|array $uri
      */
-    public function __construct(string $uri)
+    public function __construct($uri)
     {
+        if (is_array($uri)) {
+            $uri += [
+                'scheme' => null,
+                'authority' => null,
+                'user_info' => null,
+                'host' => null,
+                'port' => null,
+                'path' => '',
+                'query' => null,
+                'fragment' => null
+            ];
+            $this->components = $uri;
+            return;
+        }
+
         if (!preg_match(self::URI_REGEX, $uri,$m)) {
             throw new InvalidArgumentException("Invalid URI");
         }
@@ -57,7 +69,7 @@ class Uri implements IUri
 
         if ($this->components['authority'] === null) {
             $this->components += [
-                'userinfo' => null,
+                'user_info' => null,
                 'host' => null,
                 'port' => null,
             ];
@@ -75,7 +87,7 @@ class Uri implements IUri
             }
 
             $this->components += [
-                'userinfo' => $authority['userinfo'] ?? null,
+                'user_info' => $authority['user_info'] ?? null,
                 'host' => $authority['host'] ?? null,
                 'port' => $port,
             ];
@@ -105,7 +117,7 @@ class Uri implements IUri
      */
     public function getUserInfo(): ?string
     {
-        return $this->components['userinfo'];
+        return $this->components['user_info'];
     }
 
     /**
@@ -159,174 +171,17 @@ class Uri implements IUri
     /**
      * @inheritDoc
      */
-    public function modify(callable $callback): IUri
-    {
-        $new = clone $this;
-        $new->locked = false;
-        $callback($new);
-        $new->locked = true;
-        return $new;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withScheme(string $scheme): IUri
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-
-        $scheme = strtolower($scheme);
-        $this->components['scheme'] = $scheme;
-        $this->components['authority'] = $this->buildAuthority(
-            $this->components['host'],
-            $this->normalizePort($this->components['port'], $scheme),
-            $this->components['userinfo']
-        );
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withUserInfo(string $user, string $password = null): IUri
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-
-        $userInfo = '';
-        if ($user !== '') {
-            $userInfo = $user;
-            if ($password !== null && $password !== '') {
-                $userInfo .= ':' . $password;
-            }
-        }
-
-        $this->components['userinfo'] = $userInfo;
-
-        $this->components['authority'] = $this->buildAuthority(
-            $this->components['host'],
-            $this->normalizePort($this->components['port'], $this->components['scheme']),
-            $userInfo
-        );
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withHost(string $host): IUri
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-
-        if (!is_string($host)) {
-            throw new InvalidArgumentException("Host must be a string");
-        }
-
-        $uri = clone $this;
-        $uri->components['host'] = $host;
-
-        $uri->components['authority'] = $uri->buildAuthority(
-            $host,
-            $this->normalizePort($uri->components['port'], $uri->components['scheme']),
-            $uri->components['userinfo']
-        );
-
-        return $uri;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withPort(?int $port): IUri
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-
-        if ($port === null) {
-            $this->components['port'] = $port;
-            $this->components['authority'] = $this->buildAuthority(
-                $this->components['host'],
-                $port,
-                $this->components['userinfo']
-            );
-            return $this;
-        }
-
-        if ($port < 0 || $port > 65535) {
-            throw new InvalidArgumentException("Port outside of range 0-65535");
-        }
-
-        $this->components['port'] = $port;
-
-        $this->components['authority'] = $this->buildAuthority(
-            $this->components['host'],
-            $this->normalizePort($port, $this->components['scheme']),
-            $this->components['userinfo']
-        );
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withPath(string $path): IUri
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-
-        $this->components['path'] = $path;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withQuery(string $query): IUri
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-
-        $this->components['query'] = $query;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withFragment(string $fragment): IUri
-    {
-        if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
-        }
-
-        $this->components['fragment'] = $fragment;
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function __toString()
     {
         $uri = '';
 
-        if (isset($this->components['scheme']) && $this->components['scheme'] !== '') {
+        if (isset($this->components['scheme'])) {
             $uri .= $this->components['scheme'] . ':';
         }
 
         $has_authority = false;
 
-        if (isset($this->components['authority']) && $this->components['authority'] !== '') {
+        if (isset($this->components['authority'])) {
             $has_authority = true;
             $uri .= '//' . $this->components['authority'];
         }
@@ -338,19 +193,18 @@ class Uri implements IUri
                 if ($path[0] !== '/') {
                     $path = '/' . $path;
                 }
-            }
-            elseif ($path[0] === '/') {
+            } elseif ($path[0] === '/') {
                 $path = '/' . ltrim($path, '/');
             }
 
             $uri .= $path;
         }
 
-        if (isset($this->components['query']) && $this->components['query'] !== '') {
+        if (isset($this->components['query'])) {
             $uri .= '?' . $this->components['query'];
         }
 
-        if (isset($this->components['fragment']) && $this->components['fragment'] !== '') {
+        if (isset($this->components['fragment'])) {
             $uri .= '#' . $this->components['fragment'];
         }
 
@@ -369,32 +223,5 @@ class Uri implements IUri
         }
 
         return $port == self::STANDARD_PORTS[$scheme] ? null : $port;
-    }
-
-    /**
-     * @param string|null $host
-     * @param int|null $port
-     * @param string|null $userInfo
-     * @return string
-     */
-    protected function buildAuthority(string $host = null, int $port = null, string $userInfo = null): string
-    {
-        if ($host === null || $host === '') {
-            return '';
-        }
-
-        $authority = '';
-
-        if ($userInfo !== null && $userInfo !== '') {
-            $authority .= $userInfo . '@';
-        }
-
-        $authority .= $host;
-
-        if ($port !== null) {
-            $authority .= ':' . $port;
-        }
-
-        return $authority;
     }
 }
