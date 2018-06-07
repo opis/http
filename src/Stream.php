@@ -31,7 +31,7 @@ class Stream implements IStream
      * @param resource|string $stream
      * @param string $mode
      */
-    public function __construct($stream, string $mode = 'wb+')
+    public function __construct($stream, string $mode = 'r')
     {
         if (is_string($stream)) {
             $resource = @fopen($stream, $mode);
@@ -56,9 +56,11 @@ class Stream implements IStream
      */
     public function close(): void
     {
-        $res = $this->resource;
-        $this->resource = null;
-        fclose($res);
+        if ($this->resource) {
+            $res = $this->resource;
+            $this->resource = null;
+            fclose($res);
+        }
     }
 
     /**

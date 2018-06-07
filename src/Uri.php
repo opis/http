@@ -23,7 +23,7 @@ class Uri
 {
     const URI_REGEX = '`^(?:(?P<scheme>[^:/?#]+):)?(?://(?P<authority>[^/?#]*))?(?P<path>[^?#]*)(?:\?(?P<query>[^#]*))?(?:#(?P<fragment>.*))?`';
 
-    const AUTHORITY_REGEX = '`^(?:(?P<userinfo>[^@]*)@)?(?P<host>[^:]*)(?:\:(?P<port>\d*))?$`';
+    const AUTHORITY_REGEX = '`^(?:(?P<user_info>[^@]*)@)?(?P<host>[^:]*)(?:\:(?P<port>\d*))?$`';
 
     const STANDARD_PORTS = [
         'http' => 80,
@@ -59,13 +59,14 @@ class Uri
         }
 
         $this->components = [
-            'scheme' => $m['scheme'] ?? null,
-            'authority' => $m['authority'] ?? null,
+            'scheme' => $m['scheme'] ?: null,
+            'authority' => $m['authority'] ?: null,
             'path' => $m['path'] ?? '',
             'query' => $m['query'] ?? null,
             'fragment' => $m['fragment'] ?? null,
         ];
         unset($m);
+
 
         if ($this->components['authority'] === null) {
             $this->components += [

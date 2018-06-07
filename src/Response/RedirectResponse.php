@@ -22,11 +22,12 @@ use Opis\Http\Response;
 class RedirectResponse extends Response
 {
     /**
+     * RedirectResponse constructor.
      * @param string $location
      * @param int $status
      * @param array $headers
      */
-    public function __construct(int $status = 301, string $location, array $headers = [])
+    public function __construct(string $location, int $status = 301, array $headers = [])
     {
         $headers['Location'] = $location;
         parent::__construct($status, $headers, null);
