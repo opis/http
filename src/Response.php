@@ -118,7 +118,7 @@ class Response
      * @param null|IStream $body
      * @param string $protocolVersion
      */
-    public function __construct(int $statusCode, array $headers, ?IStream $body, string $protocolVersion = 'HTTP/1.1')
+    public function __construct(int $statusCode = 200, array $headers = [], IStream $body = null, string $protocolVersion = 'HTTP/1.1')
     {
         $this->protocolVersion = $protocolVersion;
         $this->statusCode = $statusCode;
