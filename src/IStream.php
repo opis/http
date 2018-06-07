@@ -19,12 +19,15 @@ namespace Opis\Http;
 
 interface IStream
 {
+    /**
+     * Closes the stream
+     */
     public function close(): void;
 
     /**
-     * @return resource|null
+     * @return bool
      */
-    public function detach();
+    public function isClosed(): bool;
 
     /**
      * @return int|null
@@ -32,9 +35,9 @@ interface IStream
     public function getSize(): ?int;
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function tell(): int;
+    public function tell(): ?int;
 
     /**
      * @return bool
@@ -49,13 +52,15 @@ interface IStream
     /**
      * @param int $offset
      * @param int $whence
+     * @return bool
      */
-    public function seek(int $offset, int $whence = SEEK_SET): void;
+    public function seek(int $offset, int $whence = SEEK_SET): bool;
 
     /**
      * Perform seek(0)
+     * @return bool
      */
-    public function rewind(): void;
+    public function rewind(): bool;
 
     /**
      * @return bool
@@ -64,9 +69,9 @@ interface IStream
 
     /**
      * @param string $string
-     * @return int
+     * @return int|null
      */
-    public function write(string $string): int;
+    public function write(string $string): ?int;
 
     /**
      * @return bool
@@ -75,14 +80,14 @@ interface IStream
 
     /**
      * @param int $length
-     * @return string
+     * @return string|null
      */
-    public function read(int $length): string;
+    public function read(int $length = 8192): ?string;
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getContents(): string;
+    public function readToEnd(): ?string;
 
     /**
      * @param string|null $key

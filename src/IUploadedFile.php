@@ -25,9 +25,21 @@ interface IUploadedFile
     public function getStream(): IStream;
 
     /**
-     * @param string $path
+     * @return bool
      */
-    public function moveTo(string $path): void;
+    public function wasMoved(): bool;
+
+    /**
+     * @param string $destination
+     * @return bool
+     */
+    public function moveToFile(string $destination): bool;
+
+    /**
+     * @param IStream $destination
+     * @return bool
+     */
+    public function moveToStream(IStream $destination): bool;
 
     /**
      * @return int|null

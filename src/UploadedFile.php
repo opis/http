@@ -18,9 +18,6 @@
 namespace Opis\Http;
 
 use InvalidArgumentException, RuntimeException;
-use Psr\Http\Message\{
-    StreamInterface, UploadedFileInterface
-};
 
 class UploadedFile implements IUploadedFile
 {
@@ -46,7 +43,7 @@ class UploadedFile implements IUploadedFile
     protected $moved = false;
 
     /**
-     * @param string|resource|StreamInterface $file
+     * @param string|resource|IStream $file
      * @param string|null $name
      * @param int|null $size
      * @param string|null $type
@@ -62,29 +59,39 @@ class UploadedFile implements IUploadedFile
         $this->name = $name;
         $this->type = $type;
         $this->error = $error;
+
         if ($error !== UPLOAD_ERR_OK) {
             return;
         }
-        $this->size = $size;
 
         if (is_string($file)) {
-            if (substr(PHP_SAPI, 0, 3) === 'cli') {
-                if (!is_file($file)) {
-                    throw new RuntimeException("File {$file} does not exists");
-                }
-            } else {
-                if (!is_uploaded_file($file)) {
-                    throw new RuntimeException("File {$file} was not uploaded");
-                }
+            if (!is_file($file)) {
+                throw new RuntimeException("File {$file} does not exists");
             }
-            $this->file = $file;
+            if (substr(PHP_SAPI, 0, 3) !== 'cli' && !is_uploaded_file($file)) {
+                throw new RuntimeException("File {$file} was not uploaded");
+            }
+
+            $this->file = realpath($file);
+            if ($size === null) {
+                $size = filesize($file);
+            }
         } elseif (is_resource($file)) {
             $this->stream = new Stream($file, 'r');
-        } elseif ($file instanceof StreamInterface) {
+            if ($size === null) {
+                $size = $this->stream->getSize();
+            }
+
+        } elseif ($file instanceof IStream) {
             $this->stream = $file;
+            if ($size === null) {
+                $size = $this->stream->getSize();
+            }
         } else {
             throw new InvalidArgumentException("Invalid value for file");
         }
+
+        $this->size = $size;
     }
 
     /**
@@ -104,7 +111,7 @@ class UploadedFile implements IUploadedFile
     /**
      * @inheritDoc
      */
-    public function moveTo(string $targetPath): void
+    public function moveToFile(string $destination): bool
     {
         if ($this->moved) {
             throw new RuntimeException("File was already moved");
@@ -114,48 +121,66 @@ class UploadedFile implements IUploadedFile
             throw new RuntimeException("File was not properly uploaded");
         }
 
-        $targetDir = null;
-        if ($targetPath instanceof StreamInterface) {
-            if (!$targetPath->isWritable()) {
-                throw new InvalidArgumentException("Stream is not writable");
-            }
-        } elseif (is_string($targetPath) && $targetPath !== '') {
-            $targetDir = dirname($targetPath);
-            if (!is_dir($targetDir)) {
-                throw new RuntimeException("Directory {$targetDir} does not exists");
-            }
-            if (!is_writable($targetDir)) {
-                throw new RuntimeException("Directory {$targetDir} is not writable");
-            }
-        } else {
-            throw new InvalidArgumentException("Target must be a stream or non empty string");
+        $targetDir = dirname($destination);
+        if (!is_dir($targetDir)) {
+            throw new RuntimeException("Directory {$targetDir} does not exists");
+        }
+        if (!is_writable($targetDir)) {
+            throw new RuntimeException("Directory {$targetDir} is not writable");
         }
 
-        $ok = true;
+        $ok = false;
+
         if ($this->file !== null) {
-            if ($targetDir !== null) {
-                if (substr(PHP_SAPI, 0, 3) === 'cli') {
-                    $ok = rename($this->file, $targetPath);
-                } else {
-                    $ok = is_uploaded_file($this->file) && move_uploaded_file($this->file, $targetPath);
-                }
+            if (substr(PHP_SAPI, 0, 3) === 'cli') {
+                $ok = rename($this->file, $destination);
             } else {
-                $ok = $this->copyContents(new Stream(realpath($this->file)), $targetPath);
+                $ok = is_uploaded_file($this->file) && move_uploaded_file($this->file, $destination);
             }
         } elseif ($this->stream !== null) {
-            if ($targetDir !== null) {
-                $ok = $this->copyContents($this->stream, new Stream(realpath($targetPath), 'wb'));
-            } else {
-                $ok = $this->copyContents($this->stream, $targetPath);
-            }
+            $ok = $this->copyContents($this->stream, new Stream(realpath($destination), 'wb'));
         }
 
-        $this->moved = true;
-
-        if (!$ok) {
-            throw new RuntimeException("Failed to move file");
+        if ($ok) {
+            $this->moved = true;
         }
+
+        return $ok;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function wasMoved(): bool
+    {
+        return $this->moved;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function moveToStream(IStream $destination): bool
+    {
+        if ($this->moved) {
+            throw new RuntimeException("File was already moved");
+        }
+
+        if ($this->error !== UPLOAD_ERR_OK) {
+            throw new RuntimeException("File was not properly uploaded");
+        }
+
+        if (!$destination->isWritable()) {
+            throw new InvalidArgumentException("Stream is not writable");
+        }
+
+        if ($this->copyContents($this->getStream(), $destination)) {
+            $this->moved = true;
+            return true;
+        }
+
+        return false;
+    }
+
 
     /**
      * @inheritDoc
@@ -168,7 +193,7 @@ class UploadedFile implements IUploadedFile
     /**
      * @inheritDoc
      */
-    public function getError():  int
+    public function getError(): int
     {
         return $this->error;
     }
@@ -203,7 +228,7 @@ class UploadedFile implements IUploadedFile
 
         try {
             while (!$from->eof()) {
-                $to->write($from->read(8192));
+                $to->write($from->read());
             }
         } catch (\Throwable $e) {
             return false;
@@ -240,7 +265,7 @@ class UploadedFile implements IUploadedFile
         $list = [];
 
         foreach ($files as $key => $file) {
-            if ($file instanceof UploadedFileInterface) {
+            if ($file instanceof IUploadedFile) {
                 $list[$key] = $file;
                 continue;
             }
@@ -263,7 +288,7 @@ class UploadedFile implements IUploadedFile
                         'size' => $file['size'][$index] ?? null,
                         'error' => $file['error'][$index] ?? UPLOAD_ERR_OK,
                         'name' => $file['name'][$index] ?? null,
-                        'type' => $file['type'][$index] ?? null
+                        'type' => $file['type'][$index] ?? null,
                     ];
                 }
 
