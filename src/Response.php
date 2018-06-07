@@ -111,13 +111,13 @@ class Response
     ];
 
     /**
-     * HttpResponse constructor.
-     * @param string $protocolVersion
+     * Response constructor.
      * @param int $statusCode
      * @param array $headers
      * @param null|IStream $body
+     * @param string $protocolVersion
      */
-    public function __construct(string $protocolVersion, int $statusCode, array $headers, ?IStream $body)
+    public function __construct(int $statusCode, array $headers, ?IStream $body, string $protocolVersion = 'HTTP/1.1')
     {
         $this->protocolVersion = $protocolVersion;
         $this->statusCode = $statusCode;

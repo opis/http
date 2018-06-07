@@ -23,14 +23,20 @@ class JsonResponse extends StringResponse
      * JsonResponse constructor.
      * @param $json
      * @param int $status
-     * @param array|null $headers
+     * @param array $headers
      * @param int $encodeOptions
      */
-    public function __construct($json, int $status = 200, array $headers = null, int $encodeOptions = JSON_UNESCAPED_SLASHES) {
+    public function __construct(
+        $json,
+        int $status = 200,
+        array $headers = [],
+        int $encodeOptions = JSON_UNESCAPED_SLASHES
+    ) {
+
         if (!isset($headers['Content-Type'])) {
             $headers['Content-Type'] = 'application/json';
         }
-        $json = $status === 204 ? '' : json_encode($json, $encodeOptions);
-        parent::__construct($json, $status, $headers);
+
+        parent::__construct(json_encode($json, $encodeOptions), $status, $headers);
     }
 }

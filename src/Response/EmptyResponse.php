@@ -23,11 +23,11 @@ class EmptyResponse extends Response
 {
     /**
      * EmptyResponse constructor.
-     * @param array|null $headers
      * @param int $status
+     * @param array $headers
      */
-    public function __construct(array $headers = null, int $status = 204)
+    public function __construct(int $status = 204, array $headers = [])
     {
-        parent::__construct("data://text/plain,", $status, $headers);
+        parent::__construct($status, $headers, null);
     }
 }
