@@ -43,7 +43,7 @@ class StreamTest extends TestCase
 
         $this->assertFalse($stream->eof());
 
-        $this->assertEquals('---final', $stream->getContents());
+        $this->assertEquals('---final', $stream->readToEnd());
 
         $this->assertTrue($stream->eof());
 
@@ -77,7 +77,7 @@ class StreamTest extends TestCase
 
         $this->assertFalse($stream->eof());
 
-        $this->assertEquals('---final', $stream->getContents());
+        $this->assertEquals('---final', $stream->readToEnd());
 
         $this->assertTrue($stream->eof());
 

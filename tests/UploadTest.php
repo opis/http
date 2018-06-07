@@ -37,13 +37,13 @@ class UploadTest extends TestCase
         $this->assertInstanceOf(StreamInterface::class, $f->getStream());
 
         $target = new Stream('php://memory', 'wb+');
-        $f->moveTo($target);
+        $f->moveToFile($target);
 
         $this->assertEquals(file_get_contents(__FILE__), $target);
 
         // Cannot be moved twice
         $this->expectException(\RuntimeException::class);
-        $f->moveTo($target);
+        $f->moveToFile($target);
     }
 
     public function testArray()
@@ -61,6 +61,6 @@ class UploadTest extends TestCase
 
         // Cannot be moved because contains error
         $this->expectException(\RuntimeException::class);
-        $f->moveTo('somewhere');
+        $f->moveToFile('somewhere');
     }
 }
