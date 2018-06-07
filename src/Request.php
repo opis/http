@@ -17,7 +17,7 @@
 
 namespace Opis\Http;
 
-class HttpRequest
+class Request
 {
     /** @var string */
     protected $method;

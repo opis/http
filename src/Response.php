@@ -17,8 +17,7 @@
 
 namespace Opis\Http;
 
-
-class HttpResponse
+class Response
 {
     /** @var array */
     protected $cookies = [];
@@ -35,8 +34,10 @@ class HttpResponse
     /** @var null|IStream */
     protected $body;
 
+    /** @var bool */
     private $locked = true;
 
+    /** @var array */
     const HTTP_STATUS = [
         // 1xx
         100 => 'Continue',
@@ -133,7 +134,7 @@ class HttpResponse
 
     /**
      * @param callable $callback
-     * @return HttpResponse
+     * @return Response
      */
     public function modify(callable $callback): self
     {
@@ -146,7 +147,7 @@ class HttpResponse
 
     /**
      * @param string $version
-     * @return HttpResponse
+     * @return Response
      */
     public function setProtocolVersion(string $version): self
     {
@@ -168,7 +169,7 @@ class HttpResponse
 
     /**
      * @param int $code
-     * @return HttpResponse
+     * @return Response
      */
     public function setStatusCode(int $code): self
     {
@@ -216,7 +217,7 @@ class HttpResponse
     /**
      * @param string $name
      * @param string $value
-     * @return HttpResponse
+     * @return Response
      */
     public function setHeader(string $name, string $value): self
     {
@@ -240,7 +241,7 @@ class HttpResponse
 
     /**
      * @param null|IStream $body
-     * @return HttpResponse
+     * @return Response
      */
     public function setBody(?IStream $body): self
     {
@@ -276,7 +277,7 @@ class HttpResponse
      * @param string $domain
      * @param bool $secure
      * @param bool $http_only
-     * @return HttpResponse
+     * @return Response
      */
     public function setCookie(
         string $name,
@@ -320,7 +321,7 @@ class HttpResponse
      * @param string $name
      * @param string $path
      * @param string $domain
-     * @return HttpResponse
+     * @return Response
      */
     public function clearCookie(string $name, string $path = '', string $domain = ''): self
     {
@@ -334,7 +335,7 @@ class HttpResponse
     }
 
     /**
-     * @return HttpResponse
+     * @return Response
      */
     public function clearCookies(): self
     {
