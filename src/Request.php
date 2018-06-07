@@ -1,6 +1,6 @@
 <?php
-/* ============================================================================
- * Copyright © 2013-2018 The Opis project
+/* ===========================================================================
+ * Copyright 2018 The Opis Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,153 +17,247 @@
 
 namespace Opis\Http;
 
-use InvalidArgumentException;
-use Psr\Http\Message\{
-    RequestInterface, StreamInterface, UriInterface
-};
+use Opis\Http\Traits\HeadersTrait;
 
-class Request extends Message
+class Request
 {
-    /** @var null|string */
-    protected $requestTarget = null;
-
-    /** @var UriInterface */
-    protected $uri = null;
+    use HeadersTrait;
 
     /** @var string */
-    protected $method = null;
+    protected $method;
+
+    /** @var string */
+    protected $requestTarget;
+
+    /** @var string */
+    protected $protocolVersion;
+
+    /** @var bool */
+    protected $secure;
+
+    /** @var Uri */
+    protected $uri;
+
+    /** @var array|null */
+    protected $cookies;
+
+    /** @var array */
+    protected $files;
+
+    /** @var array|null */
+    protected $query;
+
+    /** @var array|null */
+    protected $formData;
+
+    /** @var null|IStream|Stream */
+    protected $body;
 
     /**
-     * @param string|UriInterface|null $uri
+     * Request constructor.
      * @param string $method
-     * @param null|string|resource|StreamInterface $body
-     * @param string[]|string[][]|null $headers
-     * @param string|null $requestTarget
-     * @param string|null $protocolVersion
+     * @param string $requestTarget
+     * @param string $protocolVersion
+     * @param bool $secure
+     * @param array $headers
+     * @param array $files
+     * @param null|IStream $body
+     * @param array|null $cookies
+     * @param array|null $query
+     * @param array|null $formData
      */
     public function __construct(
-        $uri = null,
         string $method = 'GET',
-        $body = null,
-        array $headers = null,
-        string $requestTarget = null,
-        string $protocolVersion = null
+        string $requestTarget = '/',
+        string $protocolVersion = 'HTTP/1.1',
+        bool $secure = false,
+        array $headers = [],
+        array $files = [],
+        ?IStream $body = null,
+        ?array $cookies = null,
+        ?array $query = null,
+        ?array $formData = null
     ) {
-        parent::__construct($body, $headers, $protocolVersion);
-        if (!($uri instanceof UriInterface)) {
-            $uri = new Uri($uri ?? '');
-        }
-        $this->uri = $uri;
-        $this->method = $method;
-        $this->requestTarget = $requestTarget;
 
-        // Set host from URI if not in headers
-        if (!isset($headers['host'])) {
-            $host = $this->uri->getHost();
-            if ($host !== '') {
-                $port = $this->uri->getPort();
-                if ($port !== null) {
-                    $host .= ':' . $port;
-                }
-                $this->headers[] = [
-                    'name' => 'Host',
-                    'value' => [$host],
-                ];
+        $this->method = strtoupper($method);
+        $this->requestTarget = $requestTarget;
+        $this->protocolVersion = $protocolVersion;
+        $this->files = UploadedFile::parseFiles($files);
+        $this->secure = $secure;
+        $this->fillHeaders($headers);
+
+        if (!in_array($this->method, ['POST', 'PUT', 'PATCH', 'DELETE'])) {
+            $body = null;
+        } else {
+            if ($body === null) {
+                $body = new Stream('php://input', 'r');
             }
         }
+
+        $this->body = $body;
+        $this->cookies = $cookies;
+        $this->query = $query;
+        $this->formData = $formData;
     }
 
     /**
-     * @inheritDoc
+     * @return string
      */
-    public function getMethod()
+    public function getMethod(): string
     {
         return $this->method;
     }
 
     /**
-     * @inheritDoc
+     * @return string
      */
-    public function withMethod($method)
+    public function getRequestTarget(): string
     {
-        if (!is_string($method)) {
-            throw new InvalidArgumentException("Method must be a string");
-        }
-        $request = clone $this;
-        $request->method = $method;
-        return $request;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getUri()
-    {
-        return $this->uri;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function withUri(UriInterface $uri, $preserveHost = false)
-    {
-        $request = clone $this;
-
-        $request->uri = $uri;
-        $host = $uri->getHost();
-
-        if ($preserveHost) {
-            if ($host !== '') {
-                $host_header = null;
-                if (isset($request->headers['host'])) {
-                    $host_header = $request->getHeaderLine('host');
-                    if ($host_header === '') {
-                        $host_header = null;
-                    }
-                }
-                if ($host_header === null) {
-                    $this->headers['host'] = [
-                        'name' => 'Host',
-                        'value' => [$host],
-                    ];
-                }
-            }
-        } elseif ($host !== '') {
-            $this->headers['host'] = [
-                'name' => 'Host',
-                'value' => [$host],
-            ];
-        }
-
-        return $request;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getRequestTarget()
-    {
-        if ($this->requestTarget === null) {
-            $this->requestTarget = $this->uri->getPath();
-            $qs = $this->uri->getQuery();
-            if ($qs !== '') {
-                $this->requestTarget .= '?' . $qs;
-            }
-            if ($this->requestTarget === '') {
-                $this->requestTarget = '/';
-            }
-        }
         return $this->requestTarget;
     }
 
     /**
-     * @inheritDoc
+     * @return string
      */
-    public function withRequestTarget($requestTarget)
+    public function getProtocolVersion(): string
     {
-        $request = clone $this;
-        $request->requestTarget = $requestTarget;
-        return $request;
+        return $this->protocolVersion;
     }
 
+    /**
+     * @return Uri
+     */
+    public function getUri(): Uri
+    {
+        if ($this->uri === null) {
+            $uri = new Uri($this->requestTarget);
+
+            $components = $uri->getComponents();
+
+            if (!isset($components['host'])) {
+                if (isset($this->headers['Host'])) {
+                    $host = new Uri($this->headers['Host']);
+                    $components['host'] = $host->getHost();
+                    $components['port'] = $host->getPort();
+                }
+            }
+
+            if (isset($components['host'])) {
+                if (!isset($components['scheme'])) {
+                    $components['scheme'] = $this->secure ? 'https' : 'http';
+                }
+                $uri = new Uri($components);
+            }
+
+            $this->uri = $uri;
+        }
+
+        return $this->uri;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSecure(): bool
+    {
+        return $this->secure;
+    }
+
+    /**
+     * @return null|IStream
+     */
+    public function getBody(): ?IStream
+    {
+        return $this->body;
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function hasCookie(string $name): bool
+    {
+        return isset($this->getCookies()[$name]);
+    }
+
+    /**
+     * @param string $name
+     * @param bool $decode
+     * @return string|null
+     */
+    public function getCookie(string $name, bool $decode = true): ?string
+    {
+        $cookie = $this->getCookies()[$name] ?? null;
+
+        if ($decode && $cookie !== null) {
+            return urldecode($cookie);
+        }
+
+        return $cookie;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCookies(): array
+    {
+        if ($this->cookies === null) {
+            $result = [];
+            $cookies = explode('; ', $this->headers['Cookie']);
+            foreach ($cookies as $cookie) {
+                list($name, $value) = explode('=', $cookie, 2);
+                $name = trim($name);
+                if (empty($name)) {
+                    continue;
+                }
+                $result[$name] = trim($value, '"');
+            }
+            $this->cookies = $result;
+        }
+
+        return $this->cookies;
+    }
+
+    /**
+     * @return IUploadedFile[]
+     */
+    public function getUploadedFiles(): array
+    {
+        return $this->files;
+    }
+
+    /**
+     * @return array
+     */
+    public function getQuery(): array
+    {
+        if ($this->query === null) {
+            $query = $this->getUri()->getQuery();
+            if ($query === null) {
+                $query = [];
+            } else {
+                parse_str($query, $query);
+            }
+            $this->query = $query;
+        }
+
+        return $this->query;
+    }
+
+    /**
+     * @return array
+     */
+    public function getFormData(): array
+    {
+        if ($this->formData === null) {
+            $data = [];
+            if (isset($this->headers['Content-Type']) && 0 === strpos($this->headers['Content-Type'],
+                    'application/x-www-form-urlencoded') && $this->body !== null) {
+                parse_str((string) $this->body,$data);
+            }
+            $this->formData = $data;
+        }
+
+        return $this->formData;
+    }
 }

@@ -17,19 +17,22 @@
 
 namespace Opis\Http\Response;
 
+use Opis\Http\IStream;
+
 class HtmlResponse extends StringResponse
 {
     /**
      * HtmlResponse constructor.
-     * @param $body
+     * @param IStream|string $body
      * @param int $status
-     * @param array|null $headers
+     * @param array $headers
      */
-    public function __construct($body, int $status = 200, array $headers = null) {
+    public function __construct($body, int $status = 200, array $headers = [])
+    {
         if (!isset($headers['Content-Type'])) {
             $headers['Content-Type'] = 'text/html';
         }
-        $body = $status === 204 ? '' : (string) $body;
-        parent::__construct($body, $status, $headers);
+
+        parent::__construct((string) $body, $status, $headers);
     }
 }

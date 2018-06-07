@@ -19,33 +19,36 @@ namespace Opis\Http\Test;
 
 use Opis\Http\Response;
 use Opis\Http\Response\{
-    EmptyResponse, StringResponse,
-    JsonResponse, HtmlResponse,
+    EmptyResponse,
+    StringResponse,
+    JsonResponse,
+    HtmlResponse,
     RedirectResponse
 };
+use Opis\Http\Stream;
 use PHPUnit\Framework\TestCase;
 
 class ResponseTest extends TestCase
 {
 
-    public function testEmpty()
+    public function testEmptyDefault()
     {
-        $response = new EmptyResponse(['x-custom' => 5]);
+        $response = new EmptyResponse();
 
         $this->assertEquals(204, $response->getStatusCode());
-        $this->assertTrue($response->hasHeader('X-Custom'));
-        $this->assertEquals('5', $response->getHeaderLine('X-Custom'));
-        $this->assertEquals('', $response->getBody());
+        $this->assertEmpty($response->getHeaders());
+        $this->assertEmpty($response->getCookies());
+        $this->assertEquals(null, $response->getBody());
     }
 
     public function testString()
     {
         $response = new StringResponse("test", 200, [
-            "X-Custom" => "Custom Header"
+            "X-Custom" => "Custom Header",
         ]);
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals("4", $response->getHeaderLine("Content-Length"));
+        $this->assertEquals("4", $response->getHeader("Content-Length"));
         $this->assertTrue($response->hasHeader("x-custom"));
         $this->assertEquals("test", $response->getBody());
     }
@@ -54,9 +57,11 @@ class ResponseTest extends TestCase
     {
         $data = "some text";
 
-        $response = new Response("data://text/plain;base64," . base64_encode($data));
+        $stream = new Stream("data://text/plain;base64," . base64_encode($data), "r");
+        $response = new Response(200, [], $stream);
 
         $this->assertEquals($data, $response->getBody());
+        $this->assertEmpty($response->getHeaders());
     }
 
     public function testJson()
@@ -68,7 +73,7 @@ class ResponseTest extends TestCase
         $this->assertEquals($json, json_decode($response->getBody(), true));
         $this->assertTrue($response->hasHeader("Content-Type"));
         $this->assertTrue($response->hasHeader("Content-Length"));
-        $this->assertEquals('application/json', $response->getHeaderLine("Content-Type"));
+        $this->assertEquals('application/json', $response->getHeader("Content-Type"));
     }
 
     public function testHtml()
@@ -80,8 +85,8 @@ class ResponseTest extends TestCase
         $this->assertEquals($html, $response->getBody());
         $this->assertTrue($response->hasHeader("Content-Type"));
         $this->assertTrue($response->hasHeader("Content-Length"));
-        $this->assertEquals('text/html', $response->getHeaderLine("Content-Type"));
-        $this->assertEquals((string)strlen($html), $response->getHeaderLine("Content-Length"));
+        $this->assertEquals('text/html', $response->getHeader("Content-Type"));
+        $this->assertEquals((string)strlen($html), $response->getHeader("Content-Length"));
     }
 
     public function testRedirect()
@@ -90,7 +95,7 @@ class ResponseTest extends TestCase
 
         $this->assertEquals(301, $response->getStatusCode());
         $this->assertTrue($response->hasHeader('Location'));
-        $this->assertEquals("/new/path", $response->getHeaderLine("Location"));
-        $this->assertEquals('', $response->getBody());
+        $this->assertEquals("/new/path", $response->getHeader("Location"));
+        $this->assertEquals(null, $response->getBody());
     }
 }

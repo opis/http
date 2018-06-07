@@ -17,19 +17,21 @@
 
 namespace Opis\Http;
 
-use RuntimeException,
-    InvalidArgumentException;
+use InvalidArgumentException;
 
 class Stream implements IStream
 {
     /** @var null|resource */
     protected $resource = null;
 
+    /** @var null|string */
+    protected $to_string = null;
+
     /**
      * @param resource|string $stream
      * @param string $mode
      */
-    public function __construct($stream, string $mode = 'rw')
+    public function __construct($stream, string $mode = 'r')
     {
         if (is_string($stream)) {
             $resource = @fopen($stream, $mode);
@@ -54,7 +56,9 @@ class Stream implements IStream
      */
     public function close(): void
     {
-        if ($res = $this->detach()) {
+        if ($this->resource) {
+            $res = $this->resource;
+            $this->resource = null;
             fclose($res);
         }
     }
@@ -62,11 +66,9 @@ class Stream implements IStream
     /**
      * @inheritDoc
      */
-    public function detach()
+    public function isClosed(): bool
     {
-        $res = $this->resource;
-        $this->resource = null;
-        return $res;
+        return $this->resource === null;
     }
 
     /**
@@ -83,15 +85,16 @@ class Stream implements IStream
     /**
      * @inheritDoc
      */
-    public function tell(): int
+    public function tell(): ?int
     {
         if (!$this->resource) {
-            throw new RuntimeException("No resource available");
+            return null;
         }
 
         $pos = ftell($this->resource);
+
         if ($pos === false) {
-            throw new RuntimeException("Tell operation failed");
+            return null;
         }
 
         return $pos;
@@ -116,23 +119,25 @@ class Stream implements IStream
     /**
      * @inheritDoc
      */
-    public function seek(int $offset, int $whence = SEEK_SET): void
+    public function seek(int $offset, int $whence = SEEK_SET): bool
     {
         if (!$this->resource) {
-            throw new RuntimeException('No resource available');
+            return false;
         }
 
         if (fseek($this->resource, $offset, $whence) !== 0) {
-            throw new RuntimeException('Seek operation failed');
+            return false;
         }
+
+        return true;
     }
 
     /**
      * @inheritDoc
      */
-    public function rewind(): void
+    public function rewind(): bool
     {
-        $this->seek(0);
+        return $this->seek(0);
     }
 
     /**
@@ -165,16 +170,16 @@ class Stream implements IStream
     /**
      * @inheritDoc
      */
-    public function write(string $string): int
+    public function write(string $string): ?int
     {
         if (!$this->resource) {
-            throw new RuntimeException("No resource available");
+            return null;
         }
 
         $len = fwrite($this->resource, $string);
 
         if ($len === false) {
-            throw new RuntimeException("Write operation failed");
+            return null;
         }
 
         return $len;
@@ -205,16 +210,16 @@ class Stream implements IStream
     /**
      * @inheritDoc
      */
-    public function read(int $length): string
+    public function read(int $length = 8192): ?string
     {
         if (!$this->resource) {
-            throw new RuntimeException("No resource available");
+            return null;
         }
 
         $result = fread($this->resource, $length);
 
         if ($result === false) {
-            throw new RuntimeException("Read operation failed");
+            return null;
         }
 
         return $result;
@@ -223,12 +228,12 @@ class Stream implements IStream
     /**
      * @inheritDoc
      */
-    public function getContents(): string
+    public function readToEnd(): ?string
     {
         $result = stream_get_contents($this->resource);
 
         if ($result === false) {
-            throw new RuntimeException('Unable to read contents');
+            return null;
         }
 
         return $result;
@@ -256,6 +261,10 @@ class Stream implements IStream
      */
     public function __toString()
     {
+        if ($this->to_string !== null) {
+            return $this->to_string;
+        }
+
         if (!$this->resource) {
             return '';
         }
@@ -267,7 +276,9 @@ class Stream implements IStream
             fseek($this->resource, $current);
         }
 
-        return $contents === false ? '' : $contents;
+        $this->to_string = $contents === false ? '' : $contents;
+
+        return $this->to_string;
     }
 
     /**

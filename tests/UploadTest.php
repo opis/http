@@ -17,11 +17,10 @@
 
 namespace Opis\Http\Test;
 
-
+use Opis\Http\IStream;
 use Opis\Http\Stream;
 use Opis\Http\UploadedFile;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\StreamInterface;
 
 class UploadTest extends TestCase
 {
@@ -34,16 +33,19 @@ class UploadTest extends TestCase
         $this->assertEquals('Name', $f->getClientFilename());
         $this->assertEquals('text/plain', $f->getClientMediaType());
         $this->assertEquals(UPLOAD_ERR_OK, $f->getError());
-        $this->assertInstanceOf(StreamInterface::class, $f->getStream());
+        $this->assertInstanceOf(IStream::class, $f->getStream());
 
         $target = new Stream('php://memory', 'wb+');
-        $f->moveTo($target);
+        $f->moveToStream($target);
+
+        $this->assertTrue($f->wasMoved());
 
         $this->assertEquals(file_get_contents(__FILE__), $target);
 
+
         // Cannot be moved twice
         $this->expectException(\RuntimeException::class);
-        $f->moveTo($target);
+        $f->moveToStream($target);
     }
 
     public function testArray()
@@ -61,6 +63,6 @@ class UploadTest extends TestCase
 
         // Cannot be moved because contains error
         $this->expectException(\RuntimeException::class);
-        $f->moveTo('somewhere');
+        $f->moveToFile('somewhere');
     }
 }

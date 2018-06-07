@@ -27,7 +27,7 @@ class UriTest extends TestCase
         $uri = new Uri('http://user:pass@example.com:555/path/to/file.ext?q=1&t=2#anchor');
 
         $this->assertEquals('http', $uri->getScheme(), 'scheme');
-        $this->assertEquals('user:pass', $uri->getUserInfo(), 'userinfo');
+        $this->assertEquals('user:pass', $uri->getUserInfo(), 'user_info');
         $this->assertEquals('example.com', $uri->getHost(), 'host');
         $this->assertEquals(555, $uri->getPort(), 'port');
         $this->assertEquals('/path/to/file.ext', $uri->getPath(), 'path');
@@ -37,69 +37,64 @@ class UriTest extends TestCase
         $this->assertEquals('http://user:pass@example.com:555/path/to/file.ext?q=1&t=2#anchor', $uri);
     }
 
-    public function testWithPath()
+    public function testFragment()
     {
-        $uri = new Uri("http://example.com/path1?qs");
-        $uri = $uri->withPath('/some/path');
+        $uri = new Uri("/a#foo");
+        $this->assertEquals('foo', $uri->getFragment());
 
-        $this->assertEquals('/some/path', $uri->getPath());
-        $this->assertEquals('http://example.com/some/path?qs', $uri);
+        $uri = new Uri("/a#");
+        $this->assertEquals("", $uri->getFragment());
+
+        $uri = new Uri("/a");
+        $this->assertNull($uri->getFragment());
     }
 
-    public function testWithHost()
+    public function testQuery()
     {
-        $uri = new Uri("http://example.com:555/test.html");
-        $uri = $uri->withHost('example.test');
+        $uri = new Uri("/a?foo=bar");
+        $this->assertEquals('foo=bar', $uri->getQuery());
 
-        $this->assertEquals('example.test', $uri->getHost());
-        $this->assertEquals('http://example.test:555/test.html', $uri);
-    }
+        $uri = new Uri("/a?foo");
+        $this->assertEquals('foo', $uri->getQuery());
 
-    public function testPort()
-    {
-        $uri = new Uri("http://example.com:80/test.html");
+        $uri = new Uri("?foo");
+        $this->assertEquals('foo', $uri->getQuery());
 
-        $this->assertEquals(null, $uri->getPort());
+        $uri = new Uri("?foo#bar");
+        $this->assertEquals('foo', $uri->getQuery());
 
-        $this->assertEquals('example.com', $uri->getAuthority());
 
-        $uri = $uri->withScheme('https');
+        $uri = new Uri("/a?");
+        $this->assertEquals("", $uri->getQuery());
 
-        $this->assertEquals(80, $uri->getPort());
+        $uri = new Uri("?");
+        $this->assertEquals("", $uri->getQuery());
 
-        $this->assertEquals('example.com:80', $uri->getAuthority());
 
-        $uri = $uri->withPort(22);
+        $uri = new Uri("?#");
+        $this->assertEquals("", $uri->getQuery());
 
-        $this->assertEquals(22, $uri->getPort());
+        $uri = new Uri("/a");
+        $this->assertNull($uri->getQuery());
 
-        $this->assertEquals('example.com:22', $uri->getAuthority());
-
-        $uri = $uri->withPort(443);
-
-        $this->assertEquals(null, $uri->getPort());
-
-        $this->assertEquals('example.com', $uri->getAuthority());
+        $uri = new Uri("");
+        $this->assertNull($uri->getQuery());
     }
 
     public function testRelative()
     {
         $uri = new Uri('path/to/something?qs=t');
 
-        $this->assertEquals('', $uri->getScheme());
-        $this->assertEquals('', $uri->getAuthority());
-        $this->assertEquals('', $uri->getUserInfo());
-        $this->assertEquals('', $uri->getHost());
+        $this->assertNull($uri->getScheme(), 'scheme');
+        $this->assertNull($uri->getAuthority(), 'authority');
+        $this->assertNull($uri->getUserInfo());
+        $this->assertNull($uri->getHost());
         $this->assertNull($uri->getPort());
+        $this->assertNull($uri->getFragment());
         $this->assertEquals('path/to/something', $uri->getPath());
         $this->assertEquals('qs=t', $uri->getQuery());
-        $this->assertEquals('', $uri->getFragment());
 
         $this->assertEquals('path/to/something?qs=t', $uri);
-
-        $uri = $uri->withScheme('custom');
-
-        $this->assertEquals('custom:path/to/something?qs=t', $uri);
     }
 
 }

@@ -27,16 +27,22 @@ class StringResponse extends Response
      * StringResponse constructor.
      * @param string $body
      * @param int $status
-     * @param array|null $headers
+     * @param array $headers
      */
-    public function __construct(string $body, int $status = 200, array $headers = null)
+    public function __construct(string $body, int $status = 200, array $headers = [])
     {
+        $len = strlen($body);
 
-        $headers['Content-Length'] = strlen($body) . '';
-        $stream = new Stream("php://temp", "wb+");
-        $stream->write($body);
-        $stream->rewind();
+        if ($len) {
+            $headers['Content-Length'] = (string)$len;
+            $stream = new Stream("php://temp", "wb+");
+            $stream->write($body);
+            $stream->rewind();
+        } else {
+            unset($headers['Content-Length']);
+            $stream = null;
+        }
 
-        parent::__construct($stream, $status, $headers);
+        parent::__construct($status, $headers, $stream);
     }
 }

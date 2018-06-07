@@ -1,6 +1,6 @@
 <?php
 /* ===========================================================================
- * Copyright © 2013-2018 The Opis Project
+ * Copyright 2018 The Opis Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,28 @@
 
 namespace Opis\Http;
 
-use InvalidArgumentException;
-use Psr\Http\Message\{
-    ResponseInterface, StreamInterface
-};
+use Opis\Http\Traits\HeadersTrait;
 
-class Response extends Message implements ResponseInterface
+class Response
 {
+    use HeadersTrait;
+
+    /** @var array */
+    protected $cookies = [];
+
+    /** @var string */
+    protected $protocolVersion;
+
     /** @var int */
     protected $statusCode;
 
-    /** @var string */
-    protected $reasonPhrase = '';
+    /** @var null|IStream */
+    protected $body;
 
+    /** @var bool */
+    private $locked = true;
+
+    /** @var array */
     const HTTP_STATUS = [
         // 1xx
         100 => 'Continue',
@@ -104,58 +113,205 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Response constructor.
-     * @param null|string|resource|StreamInterface $body
-     * @param int $status
-     * @param array|null $headers
-     * @param string|null $protocolVersion
+     * @param int $statusCode
+     * @param array $headers
+     * @param null|IStream $body
+     * @param string $protocolVersion
      */
-    public function __construct(
-        $body = "php://memory",
-        int $status = 200,
-        array $headers = null,
-        string $protocolVersion = null
-    ) {
-        parent::__construct($body, $headers, $protocolVersion);
-        $this->statusCode = $status;
-        $this->reasonPhrase = self::HTTP_STATUS[$status] ?? '';
+    public function __construct(int $statusCode = 200, array $headers = [], IStream $body = null, string $protocolVersion = 'HTTP/1.1')
+    {
+        $this->protocolVersion = $protocolVersion;
+        $this->statusCode = $statusCode;
+        $this->body = $body;
+        $this->fillHeaders($headers);
     }
 
     /**
-     * @inheritDoc
+     * @param callable $callback
+     * @return Response
      */
-    public function getStatusCode()
+    public function modify(callable $callback): self
+    {
+        $response = clone $this;
+        $response->locked = false;
+        $callback($response);
+        $response->locked = true;
+        return $response;
+    }
+
+    /**
+     * @param string $version
+     * @return Response
+     */
+    public function setProtocolVersion(string $version): self
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+
+        $this->protocolVersion = $version;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getProtocolVersion(): string
+    {
+        return $this->protocolVersion;
+    }
+
+    /**
+     * @param int $code
+     * @return Response
+     */
+    public function setStatusCode(int $code): self
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+
+        $this->statusCode = $code;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getStatusCode(): int
     {
         return $this->statusCode;
     }
 
     /**
-     * @inheritDoc
+     * @return string
      */
-    public function getReasonPhrase()
+    public function getReasonPhrase(): string
     {
-        return $this->reasonPhrase;
+        return self::HTTP_STATUS[$this->statusCode] ?? '';
     }
 
     /**
-     * @inheritDoc
+     * @param string $name
+     * @param string $value
+     * @return Response
      */
-    public function withStatus($code, $reasonPhrase = '')
+    public function setHeader(string $name, string $value): self
     {
-        if (!is_int($code)) {
-            throw new InvalidArgumentException("Status code must be an integer");
-        }
-        if (!is_string($reasonPhrase)) {
-            throw new InvalidArgumentException("Reason phrase must be a string");
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
         }
 
-        if ($reasonPhrase === '') {
-            $reasonPhrase = self::HTTP_STATUS[$code] ?? '';
+        $this->headers[$this->formatHeader($name)] = trim($value);
+
+        return $this;
+    }
+
+    /**
+     * @param null|IStream $body
+     * @return Response
+     */
+    public function setBody(?IStream $body): self
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
         }
 
-        $response = clone $this;
-        $response->statusCode = $code;
-        $response->reasonPhrase = $reasonPhrase;
+        $this->body = $body;
+        return $this;
+    }
 
-        return $response;
+    /**
+     * @return null|IStream
+     */
+    public function getBody(): ?IStream
+    {
+        return $this->body;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCookies(): array
+    {
+        return $this->cookies;
+    }
+
+    /**
+     * @param string $name
+     * @param string $value
+     * @param int $expire
+     * @param string $path
+     * @param string $domain
+     * @param bool $secure
+     * @param bool $http_only
+     * @return Response
+     */
+    public function setCookie(
+        string $name,
+        string $value = '',
+        int $expire = 0,
+        string $path = '',
+        string $domain = '',
+        bool $secure = false,
+        bool $http_only = false
+    ): self {
+
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+
+        $id = md5(serialize([$name, $path, $domain]));
+        $this->cookies[$id] = [
+            'name' => $name,
+            'value' => $value,
+            'expire' => $expire,
+            'path' => $path,
+            'domain' => $domain,
+            'secure' => $secure,
+            'http_only' => $http_only
+        ];
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @param string $path
+     * @param string $domain
+     * @return bool
+     */
+    public function hasCookie(string $name, string $path = '', string $domain = ''): bool
+    {
+        return isset($this->cookies[md5(serialize([$name, $path, $domain]))]);
+    }
+
+    /**
+     * @param string $name
+     * @param string $path
+     * @param string $domain
+     * @return Response
+     */
+    public function clearCookie(string $name, string $path = '', string $domain = ''): self
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+
+        $id = md5(serialize([$name, $path, $domain]));
+        unset($this->cookies[$id]);
+        return $this;
+    }
+
+    /**
+     * @return Response
+     */
+    public function clearCookies(): self
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+
+        $this->cookies = [];
+        return $this;
     }
 }

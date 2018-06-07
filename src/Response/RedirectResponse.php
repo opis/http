@@ -18,18 +18,18 @@
 namespace Opis\Http\Response;
 
 use Opis\Http\Response;
-use Psr\Http\Message\UriInterface;
 
 class RedirectResponse extends Response
 {
     /**
      * RedirectResponse constructor.
-     * @param string|UriInterface $location
+     * @param string $location
      * @param int $status
-     * @param array|null $headers
+     * @param array $headers
      */
-    public function __construct($location, int $status = 301, array $headers = null) {
-        $headers['Location'] = (string) $location;
-        parent::__construct("data://text/plain,", $status, $headers);
+    public function __construct(string $location, int $status = 301, array $headers = [])
+    {
+        $headers['Location'] = $location;
+        parent::__construct($status, $headers, null);
     }
 }
