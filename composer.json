@@ -1,7 +1,7 @@
 {
     "name": "opis/http",
-    "description": "Simple PSR-7 HTTP Message implementation",
-    "keywords": ["opis", "http", "request", "response", "http-message", "psr-7"],
+    "description": "Http abstraction",
+    "keywords": ["opis", "http", "request", "response", "http abstraction"],
     "homepage": "http://opis.io",
     "license": "Apache-2.0",
     "authors": [
