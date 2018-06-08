@@ -23,6 +23,12 @@ use Opis\Http\{
 
 class FileStream extends Response
 {
+    /**
+     * @param string $file
+     * @param string|null $contentType
+     * @param int $statusCode
+     * @param array $headers
+     */
     public function __construct(string $file, string $contentType = null, int $statusCode = 200, array $headers = [])
     {
         if (!file_exists($file)) {
@@ -36,8 +42,6 @@ class FileStream extends Response
         $headers['Content-Type'] = $contentType;
         $headers['Content-Length'] = filesize($file);
 
-        $body = new Stream(fopen($file, 'r'));
-
-        parent::__construct($statusCode, $headers, $body);
+        parent::__construct($statusCode, $headers, new Stream($file));
     }
 }

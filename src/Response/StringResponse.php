@@ -24,7 +24,6 @@ use Opis\Http\{
 class StringResponse extends Response
 {
     /**
-     * StringResponse constructor.
      * @param string $body
      * @param int $status
      * @param array $headers

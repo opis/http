@@ -23,9 +23,15 @@ use Opis\Http\{
 
 class FileDownload extends Response
 {
+    /**
+     * @param string $file
+     * @param array $options
+     * @param int $statusCode
+     * @param array $headers
+     */
     public function __construct(string $file, array $options = [], int $statusCode = 200, array $headers = [])
     {
-        if (!file_exists($file)) {
+        if (!file_exists($file) || is_dir($file)) {
             throw new \RuntimeException(sprintf('File %s does not exist', $file));
         }
 
@@ -35,14 +41,11 @@ class FileDownload extends Response
             'content_type' => MimeType::get($file),
         ];
 
-        $o = $options;
 
-        $headers['Content-Type'] = $o['content_type'];
+        $headers['Content-Type'] = $options['content_type'];
         $headers['Content-Length'] = filesize($file);
-        $headers['Content-Dispsition'] = sprintf('%s; filename="%s"', $o['disposition'], $o['file_name']);
+        $headers['Content-Disposition'] = sprintf('%s; filename="%s"', $options['disposition'], $options['file_name']);
 
-        $body = new Stream(fopen($file, 'r'));
-
-        parent::__construct($statusCode, $headers, $body);
+        parent::__construct($statusCode, $headers, new Stream($file));
     }
 }

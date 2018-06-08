@@ -22,7 +22,6 @@ use Opis\Http\Response;
 class EmptyResponse extends Response
 {
     /**
-     * EmptyResponse constructor.
      * @param int $status
      * @param array $headers
      */

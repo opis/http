@@ -22,7 +22,6 @@ use Opis\Http\IStream;
 class HtmlResponse extends StringResponse
 {
     /**
-     * HtmlResponse constructor.
      * @param IStream|string $body
      * @param int $status
      * @param array $headers
@@ -30,7 +29,7 @@ class HtmlResponse extends StringResponse
     public function __construct($body, int $status = 200, array $headers = [])
     {
         if (!isset($headers['Content-Type'])) {
-            $headers['Content-Type'] = 'text/html';
+            $headers['Content-Type'] = 'text/html; charset=utf-8';
         }
 
         parent::__construct((string) $body, $status, $headers);

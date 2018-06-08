@@ -20,7 +20,6 @@ namespace Opis\Http\Response;
 class JsonResponse extends StringResponse
 {
     /**
-     * JsonResponse constructor.
      * @param $json
      * @param int $status
      * @param array $headers
@@ -34,7 +33,7 @@ class JsonResponse extends StringResponse
     ) {
 
         if (!isset($headers['Content-Type'])) {
-            $headers['Content-Type'] = 'application/json';
+            $headers['Content-Type'] = 'application/json; charset=utf-8';
         }
 
         parent::__construct(json_encode($json, $encodeOptions), $status, $headers);

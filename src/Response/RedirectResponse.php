@@ -22,7 +22,6 @@ use Opis\Http\Response;
 class RedirectResponse extends Response
 {
     /**
-     * RedirectResponse constructor.
      * @param string $location
      * @param int $status
      * @param array $headers

@@ -73,7 +73,7 @@ class ResponseTest extends TestCase
         $this->assertEquals($json, json_decode($response->getBody(), true));
         $this->assertTrue($response->hasHeader("Content-Type"));
         $this->assertTrue($response->hasHeader("Content-Length"));
-        $this->assertEquals('application/json', $response->getHeader("Content-Type"));
+        $this->assertEquals('application/json; charset=utf-8', $response->getHeader("Content-Type"));
     }
 
     public function testHtml()
@@ -85,7 +85,7 @@ class ResponseTest extends TestCase
         $this->assertEquals($html, $response->getBody());
         $this->assertTrue($response->hasHeader("Content-Type"));
         $this->assertTrue($response->hasHeader("Content-Length"));
-        $this->assertEquals('text/html', $response->getHeader("Content-Type"));
+        $this->assertEquals('text/html; charset=utf-8', $response->getHeader("Content-Type"));
         $this->assertEquals((string)strlen($html), $response->getHeader("Content-Length"));
     }
 
