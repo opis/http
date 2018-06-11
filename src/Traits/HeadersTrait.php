@@ -32,11 +32,12 @@ trait HeadersTrait
 
     /**
      * @param string $name
+     * @param string|null $default
      * @return null|string
      */
-    public function getHeader(string $name): ?string
+    public function getHeader(string $name, string $default = null): ?string
     {
-        return $this->headers[$this->formatHeader($name)] ?? null;
+        return $this->headers[$this->formatHeader($name)] ?? $default;
     }
 
     /**

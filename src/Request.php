@@ -268,8 +268,7 @@ class Request
      */
     public function query(string $name, $default = null)
     {
-        $query = $this->getQuery();
-        return $query[$name] ?? $default;
+        return $this->getQuery()[$name] ?? $default;
     }
 
     /**
@@ -279,8 +278,16 @@ class Request
      */
     public function formData(string $name, $default = null)
     {
-        $formData = $this->getFormData();
-        return $formData[$name] ?? $default;
+        return $this->getFormData()[$name] ?? $default;
+    }
+
+    /**
+     * @param string $name
+     * @return null|IUploadedFile
+     */
+    public function file(string $name): ?IUploadedFile
+    {
+        return $this->getUploadedFiles()[$name] ?? null;
     }
 
     /**
