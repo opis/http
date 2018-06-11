@@ -49,15 +49,20 @@ trait HeadersTrait
 
     /**
      * @param array $headers
+     * @param array|null $target
      */
-    private function fillHeaders(array $headers): void
+    private function fillHeaders(array $headers, array &$target = null): void
     {
+        if ($target === null) {
+            $target = &$this->headers;
+        }
+
         foreach ($headers as $name => $value) {
             if (!is_scalar($value) || !is_string($name)) {
                 continue;
             }
             $name = $this->formatHeader($name);
-            $this->headers[$name] = trim($value);
+            $target[$name] = trim($value);
         }
     }
 

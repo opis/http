@@ -208,6 +208,20 @@ class Response
     }
 
     /**
+     * @param array $headers
+     * @return Response
+     */
+    public function addHeaders(array $headers): self
+    {
+        if ($this->locked) {
+            throw new \RuntimeException("Immutable object");
+        }
+
+        $this->fillHeaders($headers);
+        return $this;
+    }
+
+    /**
      * @param null|IStream $body
      * @return Response
      */
