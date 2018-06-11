@@ -262,6 +262,28 @@ class Request
     }
 
     /**
+     * @param string $name
+     * @param null $default
+     * @return mixed|null
+     */
+    public function query(string $name, $default = null)
+    {
+        $query = $this->getQuery();
+        return $query[$name] ?? $default;
+    }
+
+    /**
+     * @param string $name
+     * @param null $default
+     * @return mixed|null
+     */
+    public function formData(string $name, $default = null)
+    {
+        $formData = $this->getFormData();
+        return $formData[$name] ?? $default;
+    }
+
+    /**
      * @return Request
      */
     public static function fromGlobals(): self
