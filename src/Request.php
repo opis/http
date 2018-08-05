@@ -82,7 +82,7 @@ class Request
         $this->method = strtoupper($method);
         $this->requestTarget = $requestTarget;
         $this->protocolVersion = $protocolVersion;
-        $this->files = UploadedFile::parseFiles($files);
+        $this->files = $files;
         $this->secure = $secure;
         $this->fillHeaders($headers);
 
@@ -331,7 +331,8 @@ class Request
 
         $protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1';
         $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        $files = UploadedFile::parseFiles($_FILES);
 
-        return new self($method, $requestTarget, $protocol, $secure, $headers, $_FILES, null, $_COOKIE, $_GET, $_POST);
+        return new self($method, $requestTarget, $protocol, $secure, $headers, $files, null, $_COOKIE, $_GET, $_POST);
     }
 }
