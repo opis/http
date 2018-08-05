@@ -1,6 +1,6 @@
 Opis Http
 =========
-[![Build Status](https://travis-ci.org/opis/http.svg?branch=3.0)](https://travis-ci.org/opis/http)
+[![Build Status](https://travis-ci.org/opis/http.svg?branch=master)](https://travis-ci.org/opis/http)
 [![Latest Stable Version](https://poser.pugx.org/opis/http/version.png)](https://packagist.org/packages/opis/http)
 [![Latest Unstable Version](https://poser.pugx.org/opis/http/v/unstable.png)](https://packagist.org/packages/opis/http)
 [![License](https://poser.pugx.org/opis/http/license.png)](https://packagist.org/packages/opis/http)
@@ -8,7 +8,7 @@ Opis Http
 HTTP abstraction layer
 ---------------------
 **Opis HTTP** is a library that provides an object-oriented representation for HTTP requests and responses.
-It was designed to be small, efficient, and easy to use, no matter of the size of your project.
+The library was designed to be small, efficient, and easy to work with.
 
 ### Documentation
 
@@ -20,7 +20,7 @@ The full documentation for this library can be found [here][documentation].
 
 ### Requirements
 
-* PHP ^7.0
+* PHP ^7.1
 
 ## Installation
 
