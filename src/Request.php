@@ -190,7 +190,7 @@ class Request
         $cookie = $this->getCookies()[$name] ?? null;
 
         if ($decode && $cookie !== null) {
-            return urldecode($cookie);
+            return rawurldecode($cookie);
         }
 
         return $cookie;

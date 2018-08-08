@@ -282,7 +282,7 @@ class Response
         $id = md5(serialize([$name, $path, $domain]));
         $this->cookies[$id] = [
             'name' => $name,
-            'value' => $value,
+            'value' => rawurlencode($value),
             'expire' => $expire,
             'path' => $path,
             'domain' => $domain,
@@ -301,7 +301,7 @@ class Response
     public function getCookie(string $name, string $path = '', string $domain = ''): ?string
     {
         $id = md5(serialize([$name, $path, $domain]));
-        return $this->cookies[$id] ?? null;
+        return isset($this->cookies[$id]) ? rawurldecode($this->cookies[$id]['value']) : null;
     }
 
     /**
