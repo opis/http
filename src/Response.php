@@ -292,6 +292,18 @@ class Response
      * @param string $name
      * @param string $path
      * @param string $domain
+     * @return null|string
+     */
+    public function getCookie(string $name, string $path = '', string $domain = ''): ?string
+    {
+        $id = md5(serialize([$name, $path, $domain]));
+        return $this->cookies[$id] ?? null;
+    }
+
+    /**
+     * @param string $name
+     * @param string $path
+     * @param string $domain
      * @return bool
      */
     public function hasCookie(string $name, string $path = '', string $domain = ''): bool
