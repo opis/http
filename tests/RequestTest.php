@@ -30,6 +30,6 @@ class RequestTest extends TestCase
         $request = new Request();
         $this->assertEquals('GET', $request->getMethod());
         $this->assertEquals('/', $request->getRequestTarget());
-        $this->assertEquals('HTTP/1.1', $request->getProtocolVersion());
+        $this->assertEquals('1.1', $request->getProtocolVersion());
     }
 }
