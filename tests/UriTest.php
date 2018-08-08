@@ -37,6 +37,14 @@ class UriTest extends TestCase
         $this->assertEquals('http://user:pass@example.com:555/path/to/file.ext?q=1&t=2#anchor', $uri);
     }
 
+    public function testAsterisk()
+    {
+        $uri = new Uri('*');
+
+        $this->assertEquals('*', $uri->getPath());
+        $this->assertEquals('*', (string) $uri);
+    }
+
     public function testFragment()
     {
         $uri = new Uri("/a#foo");
