@@ -17,20 +17,13 @@
 
 namespace Opis\Http;
 
-use Opis\Http\Traits\HeadersTrait;
-
-class Request
+class Request extends Message
 {
-    use HeadersTrait;
-
     /** @var string */
     protected $method;
 
     /** @var string */
     protected $requestTarget;
-
-    /** @var string */
-    protected $protocolVersion;
 
     /** @var bool */
     protected $secure;
@@ -49,9 +42,6 @@ class Request
 
     /** @var array|null */
     protected $formData;
-
-    /** @var null|IStream|Stream */
-    protected $body;
 
     /**
      * Request constructor.
@@ -81,10 +71,8 @@ class Request
 
         $this->method = strtoupper($method);
         $this->requestTarget = $requestTarget;
-        $this->protocolVersion = $protocolVersion;
         $this->files = $files;
         $this->secure = $secure;
-        $this->fillHeaders($headers);
 
         if (!in_array($this->method, ['POST', 'PUT', 'PATCH', 'DELETE'])) {
             $body = null;
@@ -94,10 +82,11 @@ class Request
             }
         }
 
-        $this->body = $body;
         $this->cookies = $cookies;
         $this->query = $query;
         $this->formData = $formData;
+
+        parent::__construct($body, $headers, $protocolVersion);
     }
 
     /**
@@ -114,14 +103,6 @@ class Request
     public function getRequestTarget(): string
     {
         return $this->requestTarget;
-    }
-
-    /**
-     * @return string
-     */
-    public function getProtocolVersion(): string
-    {
-        return $this->protocolVersion;
     }
 
     /**
@@ -161,14 +142,6 @@ class Request
     public function isSecure(): bool
     {
         return $this->secure;
-    }
-
-    /**
-     * @return null|IStream
-     */
-    public function getBody(): ?IStream
-    {
-        return $this->body;
     }
 
     /**

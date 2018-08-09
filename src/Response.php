@@ -17,23 +17,13 @@
 
 namespace Opis\Http;
 
-use Opis\Http\Traits\HeadersTrait;
-
-class Response
+class Response extends Message
 {
-    use HeadersTrait;
-
     /** @var array */
     protected $cookies = [];
 
-    /** @var string */
-    protected $protocolVersion;
-
     /** @var int */
     protected $statusCode;
-
-    /** @var null|IStream */
-    protected $body;
 
     /** @var bool */
     private $locked = true;
@@ -124,10 +114,8 @@ class Response
         IStream $body = null,
         string $protocolVersion = '1.1'
     ) {
-        $this->protocolVersion = $protocolVersion;
         $this->statusCode = $statusCode;
-        $this->body = $body;
-        $this->fillHeaders($headers);
+        parent::__construct($body, $headers, $protocolVersion);
     }
 
     /**
@@ -155,14 +143,6 @@ class Response
 
         $this->protocolVersion = $version;
         return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getProtocolVersion(): string
-    {
-        return $this->protocolVersion;
     }
 
     /**
@@ -221,7 +201,10 @@ class Response
             throw new \RuntimeException("Immutable object");
         }
 
-        $this->fillHeaders($headers);
+        foreach ($this->filterHeaders($headers) as $name => $value) {
+            $this->headers[$name] = $value;
+        }
+
         return $this;
     }
 
@@ -237,14 +220,6 @@ class Response
 
         $this->body = $body;
         return $this;
-    }
-
-    /**
-     * @return null|IStream
-     */
-    public function getBody(): ?IStream
-    {
-        return $this->body;
     }
 
     /**
