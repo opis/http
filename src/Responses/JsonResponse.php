@@ -15,7 +15,7 @@
  * limitations under the License.
  * ============================================================================ */
 
-namespace Opis\Http\Response;
+namespace Opis\Http\Responses;
 
 class JsonResponse extends StringResponse
 {

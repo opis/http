@@ -18,7 +18,7 @@
 namespace Opis\Http\Test;
 
 use Opis\Http\Response;
-use Opis\Http\Response\{
+use Opis\Http\Responses\{
     EmptyResponse,
     StringResponse,
     JsonResponse,

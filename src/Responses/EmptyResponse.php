@@ -15,33 +15,18 @@
  * limitations under the License.
  * ============================================================================ */
 
-namespace Opis\Http\Response;
+namespace Opis\Http\Responses;
 
-use Opis\Http\{
-    Response, Stream
-};
+use Opis\Http\Response;
 
-class StringResponse extends Response
+class EmptyResponse extends Response
 {
     /**
-     * @param string $body
      * @param int $status
      * @param array $headers
      */
-    public function __construct(string $body, int $status = 200, array $headers = [])
+    public function __construct(int $status = 204, array $headers = [])
     {
-        $len = strlen($body);
-
-        if ($len) {
-            $headers['Content-Length'] = (string)$len;
-            $stream = new Stream("php://temp", "wb+");
-            $stream->write($body);
-            $stream->rewind();
-        } else {
-            unset($headers['Content-Length']);
-            $stream = null;
-        }
-
-        parent::__construct($status, $headers, $stream);
+        parent::__construct($status, $headers, null);
     }
 }

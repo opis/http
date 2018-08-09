@@ -15,18 +15,20 @@
  * limitations under the License.
  * ============================================================================ */
 
-namespace Opis\Http\Response;
+namespace Opis\Http\Responses;
 
 use Opis\Http\Response;
 
-class EmptyResponse extends Response
+class RedirectResponse extends Response
 {
     /**
+     * @param string $location
      * @param int $status
      * @param array $headers
      */
-    public function __construct(int $status = 204, array $headers = [])
+    public function __construct(string $location, int $status = 301, array $headers = [])
     {
+        $headers['Location'] = $location;
         parent::__construct($status, $headers, null);
     }
 }

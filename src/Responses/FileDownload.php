@@ -15,32 +15,36 @@
  * limitations under the License.
  * ============================================================================ */
 
-namespace Opis\Http\Response;
+namespace Opis\Http\Responses;
 
 use Opis\Http\{
     MimeType, Response, Stream
 };
 
-class FileStream extends Response
+class FileDownload extends Response
 {
     /**
      * @param string $file
-     * @param string|null $contentType
+     * @param array $options
      * @param int $statusCode
      * @param array $headers
      */
-    public function __construct(string $file, string $contentType = null, int $statusCode = 200, array $headers = [])
+    public function __construct(string $file, array $options = [], int $statusCode = 200, array $headers = [])
     {
-        if (!file_exists($file)) {
+        if (!file_exists($file) || is_dir($file)) {
             throw new \RuntimeException(sprintf('File %s does not exist', $file));
         }
 
-        if ($contentType === null) {
-            $contentType = MimeType::get($contentType);
-        }
+        $options += [
+            'file_name' => basename($file),
+            'disposition' => 'attachment',
+            'content_type' => MimeType::get($file),
+        ];
 
-        $headers['Content-Type'] = $contentType;
+
+        $headers['Content-Type'] = $options['content_type'];
         $headers['Content-Length'] = filesize($file);
+        $headers['Content-Disposition'] = sprintf('%s; filename="%s"', $options['disposition'], $options['file_name']);
 
         parent::__construct($statusCode, $headers, new Stream($file));
     }
