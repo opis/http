@@ -22,12 +22,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Opis\\Http\\": "src/",
+            "Opis\\Http\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Opis\\Http\\Test\\": "tests/",
+            "Opis\\Http\\Test\\": "tests/"
         }
     },
     "extra": {
