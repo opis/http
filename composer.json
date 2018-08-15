@@ -21,10 +21,14 @@
         "phpunit/phpunit": "^6.5"
     },
     "autoload": {
-        "psr-4": {"Opis\\Http\\": "src/"}
+        "psr-4": {
+            "Opis\\Http\\": "src/",
+        }
     },
     "autoload-dev": {
-        "psr-4": {"Opis\\Http\\Test\\": "tests/"}
+        "psr-4": {
+            "Opis\\Http\\Test\\": "tests/",
+        }
     },
     "extra": {
         "branch-alias": {

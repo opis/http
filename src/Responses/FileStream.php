@@ -26,10 +26,10 @@ class FileStream extends Response
     /**
      * @param string $file
      * @param string|null $contentType
-     * @param int $statusCode
+     * @param int $status
      * @param array $headers
      */
-    public function __construct(string $file, string $contentType = null, int $statusCode = 200, array $headers = [])
+    public function __construct(string $file, string $contentType = null, int $status = 200, array $headers = [])
     {
         if (!file_exists($file)) {
             throw new \RuntimeException(sprintf('File %s does not exist', $file));
@@ -42,6 +42,6 @@ class FileStream extends Response
         $headers['Content-Type'] = $contentType;
         $headers['Content-Length'] = filesize($file);
 
-        parent::__construct($statusCode, $headers, new Stream($file));
+        parent::__construct($status, $headers, new Stream($file));
     }
 }

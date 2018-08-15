@@ -26,10 +26,10 @@ class FileDownload extends Response
     /**
      * @param string $file
      * @param array $options
-     * @param int $statusCode
+     * @param int $status
      * @param array $headers
      */
-    public function __construct(string $file, array $options = [], int $statusCode = 200, array $headers = [])
+    public function __construct(string $file, array $options = [], int $status = 200, array $headers = [])
     {
         if (!file_exists($file) || is_dir($file)) {
             throw new \RuntimeException(sprintf('File %s does not exist', $file));
@@ -46,6 +46,6 @@ class FileDownload extends Response
         $headers['Content-Length'] = filesize($file);
         $headers['Content-Disposition'] = sprintf('%s; filename="%s"', $options['disposition'], $options['file_name']);
 
-        parent::__construct($statusCode, $headers, new Stream($file));
+        parent::__construct($status, $headers, new Stream($file));
     }
 }

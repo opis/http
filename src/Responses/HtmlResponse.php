@@ -32,6 +32,6 @@ class HtmlResponse extends StringResponse
             $headers['Content-Type'] = 'text/html; charset=utf-8';
         }
 
-        parent::__construct((string) $body, $status, $headers);
+        parent::__construct((string)$body, $status, $headers);
     }
 }
