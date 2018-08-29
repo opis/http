@@ -59,7 +59,7 @@ class Request extends Message
     public function __construct(
         string $method = 'GET',
         string $requestTarget = '/',
-        string $protocolVersion = '1.1',
+        string $protocolVersion = 'HTTP/1.1',
         bool $secure = false,
         array $headers = [],
         array $files = [],

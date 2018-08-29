@@ -112,7 +112,7 @@ class Response extends Message
         int $statusCode = 200,
         array $headers = [],
         IStream $body = null,
-        string $protocolVersion = '1.1'
+        string $protocolVersion = 'HTTP/1.1'
     ) {
         $this->statusCode = $statusCode;
         parent::__construct($body, $headers, $protocolVersion);

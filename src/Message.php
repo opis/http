@@ -34,7 +34,7 @@ abstract class Message
      * @param array $headers
      * @param string $protocolVersion
      */
-    public function __construct(?IStream $body = null, array $headers = [], string $protocolVersion = '1.1')
+    public function __construct(?IStream $body = null, array $headers = [], string $protocolVersion = 'HTTP/1.1')
     {
         $this->body = $body;
         $this->headers = $this->filterHeaders($headers);
