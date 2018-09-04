@@ -43,6 +43,9 @@ class Request extends Message
     /** @var array|null */
     protected $formData;
 
+    /** @var ServerVariables */
+    protected $serverVars;
+
     /**
      * Request constructor.
      * @param string $method
@@ -55,6 +58,7 @@ class Request extends Message
      * @param array|null $cookies
      * @param array|null $query
      * @param array|null $formData
+     * @param ServerVariables|null $serverVars
      */
     public function __construct(
         string $method = 'GET',
@@ -66,7 +70,8 @@ class Request extends Message
         ?IStream $body = null,
         ?array $cookies = null,
         ?array $query = null,
-        ?array $formData = null
+        ?array $formData = null,
+        ServerVariables $serverVars = null
     ) {
 
         $this->method = strtoupper($method);
@@ -85,6 +90,7 @@ class Request extends Message
         $this->cookies = $cookies;
         $this->query = $query;
         $this->formData = $formData;
+        $this->serverVars = $serverVars ?? new ServerVariables();
 
         parent::__construct($body, $headers, $protocolVersion);
     }
@@ -226,12 +232,20 @@ class Request extends Message
             $data = [];
             if (isset($this->headers['Content-Type']) && 0 === strpos($this->headers['Content-Type'],
                     'application/x-www-form-urlencoded') && $this->body !== null) {
-                parse_str((string) $this->body,$data);
+                parse_str((string)$this->body, $data);
             }
             $this->formData = $data;
         }
 
         return $this->formData;
+    }
+
+    /**
+     * @return ServerVariables
+     */
+    public function getServerVariables(): ServerVariables
+    {
+        return $this->serverVars;
     }
 
     /**
@@ -305,7 +319,9 @@ class Request extends Message
         $protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1';
         $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
         $files = UploadedFile::parseFiles($_FILES);
+        $serverVariables = new ServerVariables($_SERVER);
 
-        return new self($method, $requestTarget, $protocol, $secure, $headers, $files, null, $_COOKIE, $_GET, $_POST);
+        return new self($method, $requestTarget, $protocol, $secure, $headers, $files, null, $_COOKIE, $_GET, $_POST,
+            $serverVariables);
     }
 }
