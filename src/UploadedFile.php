@@ -18,6 +18,7 @@
 namespace Opis\Http;
 
 use InvalidArgumentException, RuntimeException;
+use Opis\Stream\{IStream, Stream};
 
 class UploadedFile implements IUploadedFile
 {
@@ -77,15 +78,15 @@ class UploadedFile implements IUploadedFile
                 $size = filesize($file);
             }
         } elseif (is_resource($file)) {
-            $this->stream = new Stream($file, 'r');
+            $this->stream = new Stream($file);
             if ($size === null) {
-                $size = $this->stream->getSize();
+                $size = $this->stream->size();
             }
 
         } elseif ($file instanceof IStream) {
             $this->stream = $file;
             if ($size === null) {
-                $size = $this->stream->getSize();
+                $size = $this->stream->size();
             }
         } else {
             throw new InvalidArgumentException("Invalid value for file");
@@ -103,7 +104,7 @@ class UploadedFile implements IUploadedFile
             throw new RuntimeException("Stream is not available");
         }
         if ($this->stream === null) {
-            $this->stream = new Stream($this->file, 'r');
+            $this->stream = new Stream($this->file);
         }
         return $this->stream;
     }
@@ -227,14 +228,14 @@ class UploadedFile implements IUploadedFile
         }
 
         try {
-            while (!$from->eof()) {
+            while (!$from->isEOF()) {
                 $to->write($from->read());
             }
         } catch (\Throwable $e) {
             return false;
         } finally {
             if ($close) {
-                @$from->close();
+                $from->close();
             }
         }
 

@@ -18,8 +18,9 @@
 namespace Opis\Http\Responses;
 
 use Opis\Http\{
-    MimeType, Response, Stream
+    MimeType, Response
 };
+use Opis\Stream\Stream;
 
 class FileStream extends Response
 {
@@ -31,7 +32,7 @@ class FileStream extends Response
      */
     public function __construct(string $file, string $contentType = null, int $status = 200, array $headers = [])
     {
-        if (!file_exists($file)) {
+        if (!is_file($file)) {
             throw new \RuntimeException(sprintf('File %s does not exist', $file));
         }
 

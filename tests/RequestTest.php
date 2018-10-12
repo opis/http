@@ -17,10 +17,7 @@
 
 namespace Opis\Http\Test;
 
-use Opis\Http\{
-    Request, Stream
-};
-
+use Opis\Http\Request;
 use PHPUnit\Framework\TestCase;
 
 class RequestTest extends TestCase

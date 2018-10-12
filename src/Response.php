@@ -17,6 +17,8 @@
 
 namespace Opis\Http;
 
+use Opis\Stream\IStream;
+
 class Response extends Message
 {
     /** @var array */

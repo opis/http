@@ -17,6 +17,8 @@
 
 namespace Opis\Http;
 
+use Opis\Stream\IStream;
+
 interface IUploadedFile
 {
     /**

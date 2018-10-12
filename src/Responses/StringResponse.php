@@ -17,9 +17,8 @@
 
 namespace Opis\Http\Responses;
 
-use Opis\Http\{
-    Response, Stream
-};
+use Opis\Http\Response;
+use Opis\Stream\Stream;
 
 class StringResponse extends Response
 {

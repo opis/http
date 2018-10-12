@@ -25,7 +25,7 @@ use Opis\Http\Responses\{
     HtmlResponse,
     RedirectResponse
 };
-use Opis\Http\Stream;
+use Opis\Stream\PHPDataStream;
 use PHPUnit\Framework\TestCase;
 
 class ResponseTest extends TestCase
@@ -57,7 +57,7 @@ class ResponseTest extends TestCase
     {
         $data = "some text";
 
-        $stream = new Stream("data://text/plain;base64," . base64_encode($data), "r");
+        $stream = new PHPDataStream($data);
         $response = new Response(200, [], $stream);
 
         $this->assertEquals($data, $response->getBody());

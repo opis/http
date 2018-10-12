@@ -17,7 +17,7 @@
 
 namespace Opis\Http\Responses;
 
-use Opis\Http\IStream;
+use Opis\Stream\IStream;
 
 class HtmlResponse extends StringResponse
 {

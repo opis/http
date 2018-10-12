@@ -17,6 +17,8 @@
 
 namespace Opis\Http;
 
+use Opis\Stream\{IStream, Stream};
+
 class Request extends Message
 {
     /** @var string */
@@ -83,7 +85,7 @@ class Request extends Message
             $body = null;
         } else {
             if ($body === null) {
-                $body = new Stream('php://input', 'r');
+                $body = new Stream('php://input');
             }
         }
 

@@ -17,8 +17,7 @@
 
 namespace Opis\Http\Test;
 
-use Opis\Http\IStream;
-use Opis\Http\Stream;
+use Opis\Stream\{IStream, Stream};
 use Opis\Http\UploadedFile;
 use PHPUnit\Framework\TestCase;
 
@@ -51,7 +50,7 @@ class UploadTest extends TestCase
     public function testArray()
     {
         $f = UploadedFile::factory([
-            'tmp_name' => 'somefile',
+            'tmp_name' => 'some-file',
             'name' => 'Name',
             'error' => UPLOAD_ERR_CANT_WRITE
         ]);

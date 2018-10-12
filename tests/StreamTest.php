@@ -17,7 +17,7 @@
 
 namespace Opis\Http\Test;
 
-use Opis\Http\Stream;
+use Opis\Stream\{PHPDataStream, Stream};
 use PHPUnit\Framework\TestCase;
 
 class StreamTest extends TestCase
@@ -26,9 +26,9 @@ class StreamTest extends TestCase
     {
         $data = "some---data---final";
 
-        $stream = new Stream("data://text/plain," . $data);
+        $stream = new PHPDataStream($data);
 
-        $this->assertEquals(strlen($data), $stream->getSize());
+        $this->assertEquals(strlen($data), $stream->size());
         $this->assertTrue($stream->isReadable());
         $this->assertTrue($stream->isSeekable());
         $this->assertFalse($stream->isWritable());
@@ -41,11 +41,11 @@ class StreamTest extends TestCase
 
         $this->assertEquals('data', $stream->read(4));
 
-        $this->assertFalse($stream->eof());
+        $this->assertFalse($stream->isEOF());
 
         $this->assertEquals('---final', $stream->readToEnd());
 
-        $this->assertTrue($stream->eof());
+        $this->assertTrue($stream->isEOF());
 
         $stream->close();
 
@@ -57,12 +57,12 @@ class StreamTest extends TestCase
     {
         $data = "some---data---final";
 
-        $stream = new Stream(fopen('php://memory', 'w+'));
+        $stream = new Stream('php://memory', 'w+');
 
         $stream->write($data);
         $stream->rewind();
 
-        $this->assertEquals(strlen($data), $stream->getSize());
+        $this->assertEquals(strlen($data), $stream->size());
         $this->assertTrue($stream->isReadable());
         $this->assertTrue($stream->isSeekable());
         $this->assertTrue($stream->isWritable());
@@ -75,11 +75,11 @@ class StreamTest extends TestCase
 
         $this->assertEquals('data', $stream->read(4));
 
-        $this->assertFalse($stream->eof());
+        $this->assertFalse($stream->isEOF());
 
         $this->assertEquals('---final', $stream->readToEnd());
 
-        $this->assertTrue($stream->eof());
+        $this->assertTrue($stream->isEOF());
 
         $stream->close();
 
