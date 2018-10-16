@@ -21,6 +21,7 @@ The full documentation for this library can be found [here][documentation].
 ### Requirements
 
 * PHP ^7.1
+* [Opis Stream][stream]
 
 ## Installation
 
@@ -41,6 +42,7 @@ Or you could directly reference it into your `composer.json` file as a dependenc
 }
 ```
 
+[stream]: https://github.com/opis/stream
 [documentation]: https://www.opis.io/http
 [apache_license]: https://www.apache.org/licenses/LICENSE-2.0 "Apache License"
 [Packagist]: https://packagist.org/packages/opis/http "Packagist"
