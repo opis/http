@@ -136,6 +136,7 @@ class Request extends Message
                     }
                     $components['host'] = $host;
                     $components['port'] = $port;
+                    $components['authority'] = $port === null ? $host : $host . ':' . $port;
                 }
             }
 
