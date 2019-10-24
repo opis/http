@@ -125,9 +125,17 @@ class Request extends Message
 
             if (!isset($components['host'])) {
                 if (isset($this->headers['Host'])) {
-                    $host = new Uri($this->headers['Host']);
-                    $components['host'] = $host->getHost();
-                    $components['port'] = $host->getPort();
+                    $port = null;
+                    $host = $this->headers['Host'];
+                    if (strpos($host, ':') !== false) {
+                        list($host, $port) = explode(':', $host);
+                        $port = (int) $port;
+                        if ($port < 0 || $port > 65535) {
+                            $port = null;
+                        }
+                    }
+                    $components['host'] = $host;
+                    $components['port'] = $port;
                 }
             }
 
