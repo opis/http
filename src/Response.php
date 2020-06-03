@@ -17,7 +17,8 @@
 
 namespace Opis\Http;
 
-use Opis\Stream\IStream;
+use Opis\Http\Message;
+use Opis\Stream\Stream;
 
 class Response extends Message
 {
@@ -107,13 +108,13 @@ class Response extends Message
      * Response constructor.
      * @param int $statusCode
      * @param array $headers
-     * @param null|IStream $body
+     * @param null|Stream $body
      * @param string $protocolVersion
      */
     public function __construct(
         int $statusCode = 200,
         array $headers = [],
-        IStream $body = null,
+        Stream $body = null,
         string $protocolVersion = 'HTTP/1.1'
     ) {
         $this->statusCode = $statusCode;
@@ -211,10 +212,10 @@ class Response extends Message
     }
 
     /**
-     * @param null|IStream $body
+     * @param null|Stream $body
      * @return Response
      */
-    public function setBody(?IStream $body): self
+    public function setBody(?Stream $body): self
     {
         if ($this->locked) {
             throw new \RuntimeException("Immutable object");

@@ -17,12 +17,12 @@
 
 namespace Opis\Http\Responses;
 
-use Opis\Stream\IStream;
+use Opis\Stream\Stream;
 
 class HtmlResponse extends StringResponse
 {
     /**
-     * @param IStream|string $body
+     * @param Stream|string $body
      * @param int $status
      * @param array $headers
      */

@@ -17,7 +17,7 @@
 
 namespace Opis\Http;
 
-use Opis\Stream\IStream;
+use Opis\Stream\Stream;
 
 abstract class Message
 {
@@ -27,16 +27,16 @@ abstract class Message
     /** @var string */
     protected $protocolVersion;
 
-    /** @var null|IStream */
+    /** @var null|Stream */
     protected $body;
 
     /**
      * Message constructor.
-     * @param null|IStream $body
+     * @param null|Stream $body
      * @param array $headers
      * @param string $protocolVersion
      */
-    public function __construct(?IStream $body = null, array $headers = [], string $protocolVersion = 'HTTP/1.1')
+    public function __construct(?Stream $body = null, array $headers = [], string $protocolVersion = 'HTTP/1.1')
     {
         $this->body = $body;
         $this->headers = $this->filterHeaders($headers);
@@ -52,9 +52,9 @@ abstract class Message
     }
 
     /**
-     * @return null|IStream
+     * @return null|Stream
      */
-    public function getBody(): ?IStream
+    public function getBody(): ?Stream
     {
         return $this->body;
     }

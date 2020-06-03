@@ -17,7 +17,7 @@
 
 namespace Opis\Http\Test;
 
-use Opis\Stream\{PHPDataStream, Stream};
+use Opis\Stream\{PHPDataStream, ResourceStream};
 use PHPUnit\Framework\TestCase;
 
 class StreamTest extends TestCase
@@ -57,7 +57,7 @@ class StreamTest extends TestCase
     {
         $data = "some---data---final";
 
-        $stream = new Stream('php://memory', 'w+');
+        $stream = new ResourceStream('php://memory', 'w+');
 
         $stream->write($data);
         $stream->rewind();

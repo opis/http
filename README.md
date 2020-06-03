@@ -1,6 +1,6 @@
 Opis Http
 =========
-[![Build Status](https://travis-ci.org/opis/http.svg?branch=master)](https://travis-ci.org/opis/http)
+[![Tests](https://github.com/opis/http/workflows/Tests/badge.svg)](https://github.com/opis/http/actions)
 [![Latest Stable Version](https://poser.pugx.org/opis/http/version.png)](https://packagist.org/packages/opis/http)
 [![Latest Unstable Version](https://poser.pugx.org/opis/http/v/unstable.png)](https://packagist.org/packages/opis/http)
 [![License](https://poser.pugx.org/opis/http/license.png)](https://packagist.org/packages/opis/http)
@@ -16,16 +16,16 @@ The full documentation for this library can be found [here][documentation].
 
 ### License
 
-**Opis Http** is licensed under the [Apache License, Version 2.0][apache_license].
+**Opis HTTP** is licensed under the [Apache License, Version 2.0][license].
 
 ### Requirements
 
-* PHP ^7.1
-* [Opis Stream][stream]
+* PHP ^7.4
+* [Opis Stream] ^2020
 
 ## Installation
 
-**Opis Http** is available on [Packagist] and it can be installed from a 
+**Opis HTTP** is available on [Packagist] and it can be installed from a 
 command line interface by using [Composer]. 
 
 ```bash
@@ -37,13 +37,13 @@ Or you could directly reference it into your `composer.json` file as a dependenc
 ```json
 {
     "require": {
-        "opis/http": "^3.0"
+        "opis/http": "^2020"
     }
 }
 ```
 
-[stream]: https://github.com/opis/stream
 [documentation]: https://www.opis.io/http
-[apache_license]: https://www.apache.org/licenses/LICENSE-2.0 "Apache License"
+[license]: https://www.apache.org/licenses/LICENSE-2.0 "Apache License"
 [Packagist]: https://packagist.org/packages/opis/http "Packagist"
 [Composer]: https://getcomposer.org "Composer"
+[Opis Stream]: https://github.com/opis/stream "Opis Stream"

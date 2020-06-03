@@ -20,7 +20,7 @@ namespace Opis\Http\Responses;
 use Opis\Http\{
     MimeType, Response
 };
-use Opis\Stream\Stream;
+use Opis\Stream\BaseStream;
 
 class FileDownload extends Response
 {
@@ -47,6 +47,6 @@ class FileDownload extends Response
         $headers['Content-Length'] = filesize($file);
         $headers['Content-Disposition'] = sprintf('%s; filename="%s"', $options['disposition'], $options['file_name']);
 
-        parent::__construct($status, $headers, new Stream($file));
+        parent::__construct($status, $headers, new BaseStream($file));
     }
 }

@@ -17,7 +17,8 @@
 
 namespace Opis\Http;
 
-use Opis\Stream\{IStream, Stream};
+use Opis\Http\Message;
+use Opis\Stream\{Stream, BaseStream};
 
 class Request extends Message
 {
@@ -56,7 +57,7 @@ class Request extends Message
      * @param bool $secure
      * @param array $headers
      * @param array $files
-     * @param null|IStream $body
+     * @param null|Stream $body
      * @param array|null $cookies
      * @param array|null $query
      * @param array|null $formData
@@ -69,7 +70,7 @@ class Request extends Message
         bool $secure = false,
         array $headers = [],
         array $files = [],
-        ?IStream $body = null,
+        ?Stream $body = null,
         ?array $cookies = null,
         ?array $query = null,
         ?array $formData = null,
@@ -85,7 +86,7 @@ class Request extends Message
             $body = null;
         } else {
             if ($body === null) {
-                $body = new Stream('php://input');
+                $body = new BaseStream('php://input');
             }
         }
 
@@ -128,7 +129,7 @@ class Request extends Message
                     $port = null;
                     $host = $this->headers['Host'];
                     if (strpos($host, ':') !== false) {
-                        list($host, $port) = explode(':', $host);
+                        [$host, $port] = explode(':', $host);
                         $port = (int) $port;
                         if ($port < 0 || $port > 65535) {
                             $port = null;
@@ -195,7 +196,7 @@ class Request extends Message
             $result = [];
             $cookies = explode('; ', $this->headers['Cookie']);
             foreach ($cookies as $cookie) {
-                list($name, $value) = explode('=', $cookie, 2);
+                [$name, $value] = explode('=', $cookie, 2);
                 $name = trim($name);
                 if (empty($name)) {
                     continue;
@@ -209,7 +210,7 @@ class Request extends Message
     }
 
     /**
-     * @return IUploadedFile[]
+     * @return UploadedFile[]
      */
     public function getUploadedFiles(): array
     {
@@ -281,9 +282,9 @@ class Request extends Message
 
     /**
      * @param string $name
-     * @return null|IUploadedFile
+     * @return null|UploadedFile
      */
-    public function file(string $name): ?IUploadedFile
+    public function file(string $name): ?UploadedFile
     {
         return $this->getUploadedFiles()[$name] ?? null;
     }
@@ -329,7 +330,7 @@ class Request extends Message
 
         $protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1';
         $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
-        $files = UploadedFile::parseFiles($_FILES);
+        $files = UploadedFileHandler::parseFiles($_FILES);
         $serverVariables = new ServerVariables($_SERVER);
 
         return new self($method, $requestTarget, $protocol, $secure, $headers, $files, null, $_COOKIE, $_GET, $_POST,

@@ -18,7 +18,7 @@
 namespace Opis\Http\Responses;
 
 use Opis\Http\Response;
-use Opis\Stream\Stream;
+use Opis\Stream\ResourceStream;
 
 class StringResponse extends Response
 {
@@ -33,7 +33,7 @@ class StringResponse extends Response
 
         if ($len) {
             $headers['Content-Length'] = (string)$len;
-            $stream = new Stream("php://temp", "wb+");
+            $stream = new ResourceStream("php://temp", "wb+");
             $stream->write($body);
             $stream->rewind();
         } else {

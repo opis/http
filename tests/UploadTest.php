@@ -17,8 +17,8 @@
 
 namespace Opis\Http\Test;
 
-use Opis\Stream\{IStream, Stream};
-use Opis\Http\UploadedFile;
+use Opis\Stream\{Stream, ResourceStream};
+use Opis\Http\UploadedFileHandler;
 use PHPUnit\Framework\TestCase;
 
 class UploadTest extends TestCase
@@ -26,15 +26,15 @@ class UploadTest extends TestCase
     public function testOne()
     {
         $size = filesize(__FILE__);
-        $f = new UploadedFile(__FILE__, 'Name', $size, 'text/plain');
+        $f = new UploadedFileHandler(__FILE__, 'Name', $size, 'text/plain');
 
         $this->assertEquals($size, $f->getSize());
         $this->assertEquals('Name', $f->getClientFilename());
         $this->assertEquals('text/plain', $f->getClientMediaType());
         $this->assertEquals(UPLOAD_ERR_OK, $f->getError());
-        $this->assertInstanceOf(IStream::class, $f->getStream());
+        $this->assertInstanceOf(Stream::class, $f->getStream());
 
-        $target = new Stream('php://memory', 'wb+');
+        $target = new ResourceStream('php://memory', 'wb+');
         $f->moveToStream($target);
 
         $this->assertTrue($f->wasMoved());
@@ -49,7 +49,7 @@ class UploadTest extends TestCase
 
     public function testArray()
     {
-        $f = UploadedFile::factory([
+        $f = UploadedFileHandler::factory([
             'tmp_name' => 'some-file',
             'name' => 'Name',
             'error' => UPLOAD_ERR_CANT_WRITE
