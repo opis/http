@@ -234,7 +234,7 @@ class Response extends Message
     /**
      * @param string $name
      * @param string $value
-     * @param int $expire
+     * @param int $expires
      * @param string $path
      * @param string $domain
      * @param bool $secure
@@ -245,7 +245,7 @@ class Response extends Message
     public function setCookie(
         string $name,
         string $value = '',
-        int $expire = 0,
+        int $expires = 0,
         string $path = '',
         string $domain = '',
         bool $secure = false,
@@ -260,7 +260,7 @@ class Response extends Message
         $this->cookies[$id] = [
             'name' => $name,
             'value' => rawurlencode($value),
-            'expire' => $expire,
+            'expires' => $expires,
             'path' => $path,
             'domain' => $domain,
             'secure' => $secure,
