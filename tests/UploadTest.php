@@ -17,6 +17,7 @@
 
 namespace Opis\Http\Test;
 
+use RuntimeException;
 use Opis\Stream\{Stream, ResourceStream};
 use Opis\Http\UploadedFileHandler;
 use PHPUnit\Framework\TestCase;
@@ -43,7 +44,7 @@ class UploadTest extends TestCase
 
 
         // Cannot be moved twice
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $f->moveToStream($target);
     }
 
@@ -61,7 +62,7 @@ class UploadTest extends TestCase
         $this->assertEquals(UPLOAD_ERR_CANT_WRITE, $f->getError());
 
         // Cannot be moved because contains error
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $f->moveToFile('somewhere');
     }
 }

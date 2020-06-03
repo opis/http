@@ -1,6 +1,6 @@
 <?php
 /* ===========================================================================
- * Copyright 2018 Zindex Software
+ * Copyright 2018-2020 Zindex Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 
 namespace Opis\Http\Responses;
 
+use RuntimeException;
 use Opis\Http\{
     MimeType, Response
 };
-use Opis\Stream\BaseStream;
+use Opis\Stream\ResourceStream;
 
 class FileDownload extends Response
 {
@@ -33,7 +34,7 @@ class FileDownload extends Response
     public function __construct(string $file, array $options = [], int $status = 200, array $headers = [])
     {
         if (!is_file($file)) {
-            throw new \RuntimeException(sprintf('File %s does not exist', $file));
+            throw new RuntimeException(sprintf('File %s does not exist', $file));
         }
 
         $options += [
@@ -47,6 +48,6 @@ class FileDownload extends Response
         $headers['Content-Length'] = filesize($file);
         $headers['Content-Disposition'] = sprintf('%s; filename="%s"', $options['disposition'], $options['file_name']);
 
-        parent::__construct($status, $headers, new BaseStream($file));
+        parent::__construct($status, $headers, new ResourceStream($file));
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /* ===========================================================================
- * Copyright 2018 Zindex Software
+ * Copyright 2018-2020 Zindex Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,37 +17,29 @@
 
 namespace Opis\Http;
 
-use Opis\Http\Message;
-use Opis\Stream\{Stream, BaseStream};
+use Opis\Utils\Uri;
+use Opis\Stream\{ResourceStream, Stream};
 
 class Request extends Message
 {
-    /** @var string */
-    protected $method;
 
-    /** @var string */
-    protected $requestTarget;
+    protected string $method;
 
-    /** @var bool */
-    protected $secure;
+    protected string $requestTarget;
 
-    /** @var Uri */
-    protected $uri;
+    protected bool $secure;
 
-    /** @var array|null */
-    protected $cookies;
+    protected ?Uri $uri = null;
 
-    /** @var array */
-    protected $files;
+    protected ?array $cookies = null;
 
-    /** @var array|null */
-    protected $query;
+    protected array $files;
 
-    /** @var array|null */
-    protected $formData;
+    protected ?array $query = null;
 
-    /** @var ServerVariables */
-    protected $serverVars;
+    protected ?array $formData;
+
+    protected ServerVariables $serverVars;
 
     /**
      * Request constructor.
@@ -74,7 +66,7 @@ class Request extends Message
         ?array $cookies = null,
         ?array $query = null,
         ?array $formData = null,
-        ServerVariables $serverVars = null
+        ?ServerVariables $serverVars = null
     ) {
 
         $this->method = strtoupper($method);
@@ -86,7 +78,7 @@ class Request extends Message
             $body = null;
         } else {
             if ($body === null) {
-                $body = new BaseStream('php://input');
+                $body = new ResourceStream('php://input');
             }
         }
 
@@ -120,9 +112,7 @@ class Request extends Message
     public function getUri(): Uri
     {
         if ($this->uri === null) {
-            $uri = new Uri($this->requestTarget);
-
-            $components = $uri->getComponents();
+            $components = Uri::parseComponents($this->requestTarget);
 
             if (!isset($components['host'])) {
                 if (isset($this->headers['Host'])) {
@@ -131,7 +121,7 @@ class Request extends Message
                     if (strpos($host, ':') !== false) {
                         [$host, $port] = explode(':', $host);
                         $port = (int) $port;
-                        if ($port < 0 || $port > 65535) {
+                        if (!Uri::isValidPort($port)) {
                             $port = null;
                         }
                     }
@@ -145,10 +135,17 @@ class Request extends Message
                 if (!isset($components['scheme'])) {
                     $components['scheme'] = $this->secure ? 'https' : 'http';
                 }
-                $uri = new Uri($components);
             }
 
-            $this->uri = $uri;
+            // Remove standard port
+            if (isset($components['port']) && isset($components['scheme'])) {
+                if (($components['scheme'] === 'http' && $components['port'] === 80)
+                    || ($components['scheme'] === 'https' && $components['port'] === 443)) {
+                    $components['port'] = null;
+                }
+            }
+
+            $this->uri = new Uri($components);
         }
 
         return $this->uri;
@@ -223,7 +220,7 @@ class Request extends Message
     public function getQuery(): array
     {
         if ($this->query === null) {
-            $query = $this->getUri()->getQuery();
+            $query = $this->getUri()->query();
             if ($query === null) {
                 $query = [];
             } else {

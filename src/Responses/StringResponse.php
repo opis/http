@@ -1,6 +1,6 @@
 <?php
 /* ============================================================================
- * Copyright 2018 Zindex Software
+ * Copyright 2018-2020 Zindex Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 namespace Opis\Http\Responses;
 
 use Opis\Http\Response;
-use Opis\Stream\ResourceStream;
+use Opis\Stream\PHPMemoryStream;
 
 class StringResponse extends Response
 {
@@ -33,9 +33,7 @@ class StringResponse extends Response
 
         if ($len) {
             $headers['Content-Length'] = (string)$len;
-            $stream = new ResourceStream("php://temp", "wb+");
-            $stream->write($body);
-            $stream->rewind();
+            $stream = new PHPMemoryStream($body);
         } else {
             unset($headers['Content-Length']);
             $stream = null;

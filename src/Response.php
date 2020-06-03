@@ -1,6 +1,6 @@
 <?php
 /* ===========================================================================
- * Copyright 2018 Zindex Software
+ * Copyright 2018-2020 Zindex Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,17 @@
 
 namespace Opis\Http;
 
-use Opis\Http\Message;
+use RuntimeException;
 use Opis\Stream\Stream;
 
 class Response extends Message
 {
-    /** @var array */
-    protected $cookies = [];
 
-    /** @var int */
-    protected $statusCode;
+    protected array $cookies = [];
 
-    /** @var bool */
-    private $locked = true;
+    protected int $statusCode;
+
+    private bool $locked = true;
 
     /** @var array */
     const HTTP_STATUS = [
@@ -114,7 +112,7 @@ class Response extends Message
     public function __construct(
         int $statusCode = 200,
         array $headers = [],
-        Stream $body = null,
+        ?Stream $body = null,
         string $protocolVersion = 'HTTP/1.1'
     ) {
         $this->statusCode = $statusCode;
@@ -141,7 +139,7 @@ class Response extends Message
     public function setProtocolVersion(string $version): self
     {
         if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
+            throw new RuntimeException("Immutable object");
         }
 
         $this->protocolVersion = $version;
@@ -155,7 +153,7 @@ class Response extends Message
     public function setStatusCode(int $code): self
     {
         if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
+            throw new RuntimeException("Immutable object");
         }
 
         $this->statusCode = $code;
@@ -186,7 +184,7 @@ class Response extends Message
     public function setHeader(string $name, string $value): self
     {
         if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
+            throw new RuntimeException("Immutable object");
         }
 
         $this->headers[$this->formatHeader($name)] = trim($value);
@@ -201,7 +199,7 @@ class Response extends Message
     public function addHeaders(array $headers): self
     {
         if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
+            throw new RuntimeException("Immutable object");
         }
 
         foreach ($this->filterHeaders($headers) as $name => $value) {
@@ -218,7 +216,7 @@ class Response extends Message
     public function setBody(?Stream $body): self
     {
         if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
+            throw new RuntimeException("Immutable object");
         }
 
         $this->body = $body;
@@ -240,7 +238,8 @@ class Response extends Message
      * @param string $path
      * @param string $domain
      * @param bool $secure
-     * @param bool $http_only
+     * @param bool $httponly
+     * @param string|null $samesite
      * @return Response
      */
     public function setCookie(
@@ -250,11 +249,11 @@ class Response extends Message
         string $path = '',
         string $domain = '',
         bool $secure = false,
-        bool $http_only = false
+        bool $httponly = false,
+        ?string $samesite = null
     ): self {
-
         if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
+            throw new RuntimeException("Immutable object");
         }
 
         $id = md5(serialize([$name, $path, $domain]));
@@ -265,7 +264,8 @@ class Response extends Message
             'path' => $path,
             'domain' => $domain,
             'secure' => $secure,
-            'http_only' => $http_only,
+            'httponly' => $httponly,
+            'samesite' => $samesite,
         ];
         return $this;
     }
@@ -302,7 +302,7 @@ class Response extends Message
     public function clearCookie(string $name, string $path = '', string $domain = ''): self
     {
         if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
+            throw new RuntimeException("Immutable object");
         }
 
         $id = md5(serialize([$name, $path, $domain]));
@@ -316,7 +316,7 @@ class Response extends Message
     public function clearCookies(): self
     {
         if ($this->locked) {
-            throw new \RuntimeException("Immutable object");
+            throw new RuntimeException("Immutable object");
         }
 
         $this->cookies = [];

@@ -1,6 +1,6 @@
 <?php
 /* ============================================================================
- * Copyright 2018 Zindex Software
+ * Copyright 2018-2020 Zindex Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,26 @@
 
 namespace Opis\Http;
 
+use Throwable;
 use InvalidArgumentException, RuntimeException;
 use Opis\Stream\{Stream, ResourceStream};
 
 class UploadedFileHandler implements UploadedFile
 {
-    /** @var string */
-    protected $name;
 
-    /** @var string|null */
-    protected $type;
+    protected ?string $name;
 
-    /** @var int */
-    protected $error;
+    protected ?string $type;
 
-    /** @var int|null */
-    protected $size;
+    protected int $error;
 
-    /** @var Stream|null */
-    protected $stream = null;
+    protected ?int $size = null;
 
-    /** @var null|string */
-    protected $file = null;
+    protected ?Stream $stream = null;
 
-    /** @var bool */
-    protected $moved = false;
+    protected ?string $file = null;
+
+    protected bool $moved = false;
 
     /**
      * @param string|resource|Stream $file
@@ -52,9 +47,9 @@ class UploadedFileHandler implements UploadedFile
      */
     public function __construct(
         $file,
-        string $name = null,
-        int $size = null,
-        string $type = null,
+        ?string $name = null,
+        ?int $size = null,
+        ?string $type = null,
         int $error = UPLOAD_ERR_OK
     ) {
         $this->name = $name;
@@ -231,7 +226,7 @@ class UploadedFileHandler implements UploadedFile
             while (!$from->isEOF()) {
                 $to->write($from->read());
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return false;
         } finally {
             if ($close) {
