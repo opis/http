@@ -21,7 +21,7 @@ use Opis\Http\Response;
 use Opis\Http\Responses\{
     EmptyResponse,
     StringResponse,
-    JsonResponse,
+    JSONResponse,
     HtmlResponse,
     RedirectResponse
 };
@@ -68,7 +68,7 @@ class ResponseTest extends TestCase
     {
         $json = [1, 2, "abc", ["x" => 1]];
 
-        $response = new JsonResponse($json);
+        $response = new JSONResponse($json);
 
         $this->assertEquals($json, json_decode($response->getBody(), true));
         $this->assertTrue($response->hasHeader("Content-Type"));

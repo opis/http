@@ -17,7 +17,7 @@
 
 namespace Opis\Http\Responses;
 
-class JsonResponse extends StringResponse
+class JSONResponse extends StringResponse
 {
     /**
      * @param $json
