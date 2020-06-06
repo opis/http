@@ -38,7 +38,7 @@ class FileStream extends Response
         }
 
         if ($contentType === null) {
-            $contentType = MimeType::get($contentType);
+            $contentType = MimeType::get($file);
         }
 
         $headers['Content-Type'] = $contentType;

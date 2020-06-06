@@ -17,9 +17,9 @@
 
 namespace Opis\Http;
 
-class MimeType
+final class MimeType
 {
-    protected static array $defaultMime = [
+    private static array $defaultMime = [
         'ez' => 'application/andrew-inset',
         'aw' => 'application/applixware',
         'atom' => 'application/atom+xml',
@@ -790,7 +790,7 @@ class MimeType
     /**
      * Mime constructor
      */
-    protected function __construct()
+    private function __construct()
     {
         // nothing here
     }
