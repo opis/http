@@ -316,9 +316,9 @@ class Request extends Message
             $headers[$key] = $value;
         }
 
-        if (isset($_SERVER['PATH_INFO'])) {
+        if (($_SERVER['PATH_INFO'] ?? '') !== '') {
             $requestTarget = $_SERVER['PATH_INFO'];
-            if (isset($_SERVER['QUERY_STRING'])) {
+            if (($_SERVER['QUERY_STRING'] ?? '') !== '') {
                 $requestTarget .= '?' . $_SERVER['QUERY_STRING'];
             }
         } else {
@@ -326,11 +326,22 @@ class Request extends Message
         }
 
         $protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1';
-        $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        $secure = ($_SERVER['HTTPS'] ?? 'off') !== 'off';
         $files = UploadedFileHandler::parseFiles($_FILES);
         $serverVariables = new ServerVariables($_SERVER);
 
-        return new self($method, $requestTarget, $protocol, $secure, $headers, $files, null, $_COOKIE, $_GET, $_POST,
-            $serverVariables);
+        return new self(
+            $method,
+            $requestTarget,
+            $protocol,
+            $secure,
+            $headers,
+            $files,
+            null,
+            $_COOKIE,
+            $_GET,
+            $_POST,
+            $serverVariables
+        );
     }
 }
