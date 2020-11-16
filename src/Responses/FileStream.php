@@ -18,10 +18,8 @@
 namespace Opis\Http\Responses;
 
 use RuntimeException;
-use Opis\Http\{
-    MimeType, Response
-};
 use Opis\Stream\ResourceStream;
+use Opis\Http\{MimeType, Response};
 
 class FileStream extends Response
 {
@@ -37,13 +35,15 @@ class FileStream extends Response
             throw new RuntimeException(sprintf('File %s does not exist', $file));
         }
 
-        if ($contentType === null) {
-            $contentType = MimeType::get($file);
+        $body = null;
+        $size = $status !== 204 ? filesize($file) : 0;
+
+        if ($size) {
+            $headers['Content-Type'] = $contentType ??  MimeType::get($file);
+            $headers['Content-Length'] = $size;
+            $body = new ResourceStream($file);
         }
 
-        $headers['Content-Type'] = $contentType;
-        $headers['Content-Length'] = filesize($file);
-
-        parent::__construct($status, $headers, new ResourceStream($file));
+        parent::__construct($status, $headers, $body);
     }
 }

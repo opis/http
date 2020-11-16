@@ -37,17 +37,21 @@ class FileDownload extends Response
             throw new RuntimeException(sprintf('File %s does not exist', $file));
         }
 
-        $options += [
-            'file_name' => basename($file),
-            'disposition' => 'attachment',
-            'content_type' => MimeType::get($file),
-        ];
+        $body = null;
+        $size = $status !== 204 ? filesize($file) : 0;
 
+        if ($size) {
+            $options += [
+                'file_name' => basename($file),
+                'disposition' => 'attachment',
+                'content_type' => MimeType::get($file),
+            ];
+            $headers['Content-Type'] = $options['content_type'];
+            $headers['Content-Length'] = $size;
+            $headers['Content-Disposition'] = sprintf('%s; filename="%s"', $options['disposition'], $options['file_name']);
+            $body = new ResourceStream($file);
+        }
 
-        $headers['Content-Type'] = $options['content_type'];
-        $headers['Content-Length'] = filesize($file);
-        $headers['Content-Disposition'] = sprintf('%s; filename="%s"', $options['disposition'], $options['file_name']);
-
-        parent::__construct($status, $headers, new ResourceStream($file));
+        parent::__construct($status, $headers, $body);
     }
 }

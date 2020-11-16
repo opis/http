@@ -29,7 +29,7 @@ class StringResponse extends Response
      */
     public function __construct(string $body, int $status = 200, array $headers = [])
     {
-        $len = strlen($body);
+        $len = $status !== 204 ? strlen($body) : 0;
 
         if ($len) {
             $headers['Content-Length'] = (string)$len;

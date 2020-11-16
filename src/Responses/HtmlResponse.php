@@ -28,10 +28,15 @@ class HtmlResponse extends StringResponse
      */
     public function __construct($body, int $status = 200, array $headers = [])
     {
-        if (!isset($headers['Content-Type'])) {
-            $headers['Content-Type'] = 'text/html; charset=utf-8';
+        if ($status !== 204) {
+            if (!isset($headers['Content-Type'])) {
+                $headers['Content-Type'] = 'text/html; charset=utf-8';
+            }
+            $body = (string)$body;
+        } else {
+            $body = '';
         }
 
-        parent::__construct((string)$body, $status, $headers);
+        parent::__construct($body, $status, $headers);
     }
 }

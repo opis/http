@@ -31,11 +31,15 @@ class JSONResponse extends StringResponse
         array $headers = [],
         int $encodeOptions = JSON_UNESCAPED_SLASHES
     ) {
+        $body = '';
 
-        if (!isset($headers['Content-Type'])) {
-            $headers['Content-Type'] = 'application/json; charset=utf-8';
+        if ($status !== 204) {
+            if (!isset($headers['Content-Type'])) {
+                $headers['Content-Type'] = 'application/json; charset=utf-8';
+            }
+            $body = json_encode($json, $encodeOptions);
         }
 
-        parent::__construct(json_encode($json, $encodeOptions), $status, $headers);
+        parent::__construct($body, $status, $headers);
     }
 }
