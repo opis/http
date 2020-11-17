@@ -2,7 +2,7 @@
     "name": "opis/http",
     "description": "Http abstraction",
     "keywords": ["opis", "http", "request", "response", "http abstraction"],
-    "homepage": "http://opis.io/http",
+    "homepage": "https://opis.io/http",
     "license": "Apache-2.0",
     "authors": [
         {
@@ -15,7 +15,7 @@
         }
     ],
     "require": {
-        "php": "^7.4",
+        "php": "^7.4|^8.0",
         "ext-json": "*",
         "opis/stream": "2020.x-dev",
         "opis/utils": "2020.x-dev"

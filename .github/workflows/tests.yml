@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: [7.4]
+        php: [7.4, 8.0]
 
     name: PHP ${{ matrix.php }}
 
@@ -24,6 +24,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          tools: composer:v2
           coverage: none
 
       - name: Install dependencies
