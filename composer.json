@@ -18,7 +18,7 @@
         "php": "^7.4 || ^8.0",
         "ext-json": "*",
         "opis/stream": "2020.x-dev",
-        "opis/utils": "2020.x-dev"
+        "opis/uri": "2021.x-dev"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.0"

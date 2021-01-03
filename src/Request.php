@@ -17,7 +17,7 @@
 
 namespace Opis\Http;
 
-use Opis\Utils\Uri;
+use Opis\Uri\Uri;
 use Opis\Stream\{ResourceStream, Stream};
 
 class Request extends Message
